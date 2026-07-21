@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>塔防游戏</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="app">
+    <div id="game-wrap">
+      <canvas id="game-canvas"></canvas>
+      <div id="hud">
+        <span id="hud-gold">金币: 0</span>
+        <span id="hud-lives">基地生命: 0</span>
+        <span id="hud-wave">波次: 0</span>
+        <button id="btn-next-wave">开始下一波</button>
+      </div>
+      <div id="overlay" class="hidden">
+        <div class="overlay-card">
+          <h2 id="overlay-title">游戏结束</h2>
+          <p id="overlay-sub"></p>
+          <button id="btn-restart">重新开始</button>
+        </div>
+      </div>
+    </div>
+
+    <aside id="side-panel">
+      <div class="panel-section">
+        <h3>全局强化</h3>
+        <button class="up-btn" data-up="damage"></button>
+        <button class="up-btn" data-up="fireRate"></button>
+        <button class="up-btn" data-up="range"></button>
+      </div>
+
+      <div class="panel-section">
+        <h3>武器选择</h3>
+        <div class="weapon-row">
+          <button class="wpn-btn" data-weapon="sword">1 剑</button>
+          <button class="wpn-btn" data-weapon="arrow">2 弓</button>
+          <button class="wpn-btn" data-weapon="cannon">3 炮</button>
+          <button class="wpn-btn" data-weapon="magic" id="btn-magic">4 魔</button>
+        </div>
+        <button id="btn-unlock-magic">解锁魔法塔 · 120金</button>
+        <p id="weapon-desc" class="hint"></p>
+      </div>
+
+      <div class="panel-section tip">
+        <h3>操作说明</h3>
+        <p>点击空地放置当前武器士兵</p>
+        <p>1/2/3/4 切换武器</p>
+        <p>击杀怪兽得金币，漏怪扣基地血</p>
+        <p>打满 10 波即胜利</p>
+      </div>
+    </aside>
+  </div>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
