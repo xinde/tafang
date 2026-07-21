@@ -1,4 +1,5 @@
 import { CONFIG } from '../config.js';
+import { audio } from '../engine/audio.js';
 
 /**
  * Economy：金币与基地生命。
@@ -37,6 +38,13 @@ export class Economy {
 
   /** 获得金币（击杀奖励等） */
   earn(amount) {
+    this.gold += amount;
+    audio.play('coin', { throttle: 50 });
+    this._emit();
+  }
+
+  /** 退还金币（出售士兵等），不播放得金币音效 */
+  refund(amount) {
     this.gold += amount;
     this._emit();
   }

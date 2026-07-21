@@ -80,9 +80,13 @@ export class Renderer {
   }
 
   /** 在指定网格绘制基地 */
-  drawBase(col, row) {
+  drawBase(col, row, opts = {}) {
     const { ctx, cellSize } = this;
     const { x, y } = this.cellToPx(col, row);
+    if (opts.image) {
+      ctx.drawImage(opts.image, x, y, cellSize, cellSize);
+      return;
+    }
     const pad = cellSize * 0.1;
     ctx.fillStyle = '#3b6ea5';
     ctx.fillRect(x + pad, y + pad, cellSize - pad * 2, cellSize - pad * 2);
@@ -114,6 +118,18 @@ export class Renderer {
       ctx.stroke();
     }
 
+    // 图片塔：整体按 angle 旋转绘制（随发射方向旋转）
+    if (opts.image) {
+      const size = cellSize * 0.9;
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      if (opts.angle) ctx.rotate(opts.angle);
+      ctx.drawImage(opts.image, -size / 2, -size / 2, size, size);
+      ctx.restore();
+      return;
+    }
+
+    // 回退：程序化底座 + 炮管（图片未就绪时）
     ctx.fillStyle = color;
     ctx.beginPath();
     ctx.arc(c.x, c.y, cellSize * 0.32, 0, Math.PI * 2);
@@ -121,6 +137,37 @@ export class Renderer {
     ctx.strokeStyle = 'rgba(0,0,0,0.45)';
     ctx.lineWidth = 2;
     ctx.stroke();
+
+    // 炮管：按 opts.angle 朝向绘制（底座固定、炮塔随发射方向旋转）
+    if (opts.angle != null) {
+      ctx.save();
+      const len = cellSize * 0.42;
+      const bx = c.x + Math.cos(opts.angle) * len;
+      const by = c.y + Math.sin(opts.angle) * len;
+      ctx.strokeStyle = 'rgba(20,20,30,0.85)';
+      ctx.lineWidth = Math.max(3, cellSize * 0.11);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(c.x, c.y);
+      ctx.lineTo(bx, by);
+      ctx.stroke();
+      // 炮口
+      ctx.fillStyle = 'rgba(20,20,30,0.85)';
+      ctx.beginPath();
+      ctx.arc(bx, by, Math.max(2, cellSize * 0.07), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  /** 绘制怪兽：有图片则 drawImage，否则回退到 drawCircle */
+  drawMonster(x, y, radius, opts = {}) {
+    if (opts.image) {
+      const d = radius * 2;
+      this.ctx.drawImage(opts.image, x - radius, y - radius, d, d);
+      return;
+    }
+    this.drawCircle(x, y, radius, opts.color);
   }
 
   /** 通用线段（弹道轨迹/连线） */

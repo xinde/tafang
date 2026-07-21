@@ -1,6 +1,7 @@
 import { CONFIG } from '../config.js';
 import { getWeapon, WeaponType } from './weapon.js';
 import { Projectile } from './projectile.js';
+import { audio } from '../engine/audio.js';
 
 /**
  * 索敌策略：
@@ -11,6 +12,16 @@ export const TargetMode = {
   FIRST: 'first',
   NEAREST: 'nearest',
 };
+
+const TURRET_ROT_SPEED = 8; // 炮塔转向速度（弧度/秒），平滑跟随目标避免抖动
+
+/** 以最大角速度 maxStep 将 cur 旋向 desired，取最短弧（处理 -PI..PI 环绕） */
+function aimToward(cur, desired, maxStep) {
+  let diff = desired - cur;
+  diff = Math.atan2(Math.sin(diff), Math.cos(diff)); // 归一化到 [-PI, PI]
+  if (Math.abs(diff) <= maxStep) return desired;
+  return cur + Math.sign(diff) * maxStep;
+}
 
 /**
  * Soldier（士兵/防御塔）：装备一种武器，自动索敌并开火。
@@ -28,6 +39,8 @@ export class Soldier {
     this.setWeapon(weaponType);
     this.targetMode = TargetMode.FIRST;
     this._cooldown = 0;
+    this.angle = 0;          // 炮塔当前朝向（弧度），平滑跟随发射方向
+    this.target = null;      // 当前目标（丢失时保留最后朝向）
     // 像素中心坐标（由 map cellSize 推算）
     const cs = CONFIG.CELL_SIZE;
     this.x = col * cs + cs / 2;
@@ -84,10 +97,17 @@ export class Soldier {
    */
   update(dt, ctx) {
     this._cooldown = Math.max(0, this._cooldown - dt);
-    if (this._cooldown > 0) return;
 
+    // 持续索敌并平滑转向目标（冷却中也在跟踪，炮塔始终朝向发射方向）
     const target = this.acquireTarget(ctx.monsters);
-    if (!target) return;
+    if (target) {
+      this.target = target;
+      const desired = Math.atan2(target.y - this.y, target.x - this.x);
+      this.angle = aimToward(this.angle, desired, TURRET_ROT_SPEED * dt);
+    }
+    // 目标丢失时保留最后朝向（this.angle 不变）
+
+    if (this._cooldown > 0 || !target) return;
 
     this._fire(target, ctx);
     this._cooldown = 1 / this.fireRate;
@@ -95,6 +115,8 @@ export class Soldier {
 
   _fire(target, ctx) {
     const w = this.weapon;
+    // 不同武器不同开火音效（剑/弓/炮/魔 各一种）
+    audio.play(`fire_${w.type}`);
     if (w.projectileSpeed > 0) {
       // 弹道武器（箭/炮弹）
       ctx.projectiles.add(new Projectile({
@@ -105,6 +127,7 @@ export class Soldier {
         aoe: w.aoe,
         color: w.color,
         radius: w.type === WeaponType.CANNON ? 6 : 4,
+        weaponType: w.type,
       }));
     } else {
       // 近战即时命中 + 斩击弧光

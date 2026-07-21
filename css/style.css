@@ -96,6 +96,11 @@ html, body {
   cursor: not-allowed;
 }
 
+#hud .mute-btn.muted {
+  background: #555;
+  color: #ddd;
+}
+
 /* ---------- 侧边升级面板 ---------- */
 #side-panel {
   flex: 0 0 220px;

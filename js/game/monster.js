@@ -32,6 +32,7 @@ export class Monster {
     this.reward = opts.reward ?? 5;         // 击杀金币
     this.radius = opts.radius ?? 0.30;      // 体型（cellSize 比例）
     this.color = opts.color ?? '#e05555';
+    this.key = opts.key ?? 'normal';        // 类型 key，用于选图与调试
     this.dist = 0;                          // 已行进像素距离
     this.alive = true;
     this.reachedBase = false;

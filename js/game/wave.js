@@ -1,5 +1,6 @@
 import { Monster, MonsterType } from './monster.js';
 import { CONFIG } from '../config.js';
+import { audio } from '../engine/audio.js';
 
 // 波次节奏常量（集中在 wave 模块，避免改动公共 config）
 const SPAWN_INTERVAL = 0.8;   // 同波内相邻怪兽生成间隔（秒）
@@ -60,6 +61,7 @@ export class WaveManager {
       if (index >= 3 && i % 5 === 4) t = MonsterType.TANK;       // 第3波起每5只一个坦克
       else if (index >= 2 && i % 3 === 2) t = MonsterType.FAST;  // 第2波起每3只一个快速
       queue.push({
+        key: t.key,
         hp: Math.round(t.hp * hpScale),
         speed: t.speed * speedScale,
         reward: t.reward + rewardBonus,
@@ -82,6 +84,7 @@ export class WaveManager {
     this._spawnTimer = 0;
     this.spawning = true;
     this._interWaveTimer = this.autoStartDelay; // 本波清空后开始倒计时
+    audio.play('wave_start');
     return true;
   }
 
@@ -110,9 +113,11 @@ export class WaveManager {
       const m = this.active[i];
       if (m.reachedBase) {
         economy.damageBase(1);
+        audio.play('leak');
         this.active.splice(i, 1);
       } else if (!m.alive) {
         economy.earn(m.reward);
+        audio.play('kill');
         if (effects) effects.spawnDeath(m.x, m.y, m.color);
         this.active.splice(i, 1);
       }

@@ -3,7 +3,10 @@
  * - 追踪型（homing）：锁定一只怪兽，跟随其当前位置，命中单体。
  * - 溅射型（aoe>0）：飞向锁定点，到达后对范围内所有怪兽造成伤害。
  * 由 Soldier 开火创建，ProjectileManager 统一 update/遍历。
+ * 命中时按 weaponType 播放对应命中/爆炸音效。
  */
+import { audio } from '../engine/audio.js';
+
 export class Projectile {
   /**
    * @param {object} o
@@ -15,6 +18,7 @@ export class Projectile {
    * @param {number} [o.aoe=0] 溅射半径（像素）
    * @param {string} [o.color] 颜色
    * @param {number} [o.radius=4] 视觉半径
+   * @param {string} [o.weaponType] 武器类型，决定命中音效
    */
   constructor(o) {
     this.x = o.x;
@@ -25,6 +29,7 @@ export class Projectile {
     this.aoe = o.aoe || 0;
     this.color = o.color || '#fff';
     this.radius = o.radius || 4;
+    this.weaponType = o.weaponType || null;
     this.alive = true;
     // 记录目标点（目标死亡后仍飞向最后位置，保证炮弹不悬空）
     this._tx = o.target ? o.target.x : o.x;
@@ -55,6 +60,8 @@ export class Projectile {
 
   _hit(monsters, effects) {
     this.alive = false;
+    // 命中/爆炸音效按弹道（武器类型）区分
+    if (this.weaponType) audio.play(`hit_${this.weaponType}`);
     if (this.aoe > 0) {
       // 范围溅射：命中点周边所有怪兽
       for (const m of monsters) {

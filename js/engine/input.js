@@ -17,9 +17,14 @@ export class Input {
     this.hoverCell = null;
 
     this._onClick = null;
+    this._onRightClick = null;
     this._onMove = null;
 
     canvas.addEventListener('click', (e) => this._handleClick(e));
+    canvas.addEventListener('contextmenu', (e) => {
+      e.preventDefault(); // 屏蔽系统右键菜单，用于"出售士兵"
+      this._handleRightClick(e);
+    });
     canvas.addEventListener('mousemove', (e) => this._handleMove(e));
     canvas.addEventListener('mouseleave', () => {
       this.hoverCell = null;
@@ -30,6 +35,9 @@ export class Input {
 
   /** 注册点击回调，参数为网格坐标 {col,row} */
   onCellClick(fn) { this._onClick = fn; }
+
+  /** 注册右键回调，参数为网格坐标 {col,row} */
+  onCellRightClick(fn) { this._onRightClick = fn; }
 
   /** 注册移动回调，参数为网格坐标 {col,row} 或 null */
   onCellMove(fn) { this._onMove = fn; }
@@ -51,6 +59,11 @@ export class Input {
   _handleClick(e) {
     const cell = this._eventToCell(e);
     if (cell && this._onClick) this._onClick(cell);
+  }
+
+  _handleRightClick(e) {
+    const cell = this._eventToCell(e);
+    if (cell && this._onRightClick) this._onRightClick(cell);
   }
 
   _handleMove(e) {
