@@ -12,11 +12,10 @@ import { ProjectileManager } from './game/projectile.js';
 import { EffectManager } from './game/effects.js';
 import { WEAPONS, WeaponType } from './game/weapon.js';
 import { UpgradeManager, UPGRADE_KEYS, UPGRADE_DEFS } from './game/upgrade.js';
+import waveConfig from '../config/waves.json' with { type: 'json' };
 
 // ---------- 初始化画布 ----------
 const canvas = document.getElementById('game-canvas');
-canvas.width = CANVAS_WIDTH;
-canvas.height = CANVAS_HEIGHT;
 const ctx = canvas.getContext('2d');
 
 // ---------- 模块装配 ----------
@@ -25,11 +24,36 @@ const renderer = new Renderer(ctx, grid);
 const map = new GameMap();
 const economy = new Economy();
 const soldiers = new SoldierManager();
-const waves = new WaveManager(map);
+const waves = new WaveManager(map, waveConfig);
 const projectiles = new ProjectileManager();
 const effects = new EffectManager();
 const upgrades = new UpgradeManager();
 const input = new Input(canvas, grid);
+
+// ---------- 视口自适应：画布铺满 #game-wrap ----------
+// 逻辑空间固定 960×576，按容器尺寸等比缩放并居中，DPR 适配高清屏；
+// 游戏元素不变形（统一缩放），无滚动条，输入坐标同步换算。
+const gameWrap = document.getElementById('game-wrap');
+function resizeCanvas() {
+  const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+  const w = Math.max(1, Math.floor(gameWrap.clientWidth * dpr));
+  const h = Math.max(1, Math.floor(gameWrap.clientHeight * dpr));
+  canvas.width = w;
+  canvas.height = h;
+  const scale = Math.min(w / CANVAS_WIDTH, h / CANVAS_HEIGHT);
+  const originX = (w - CANVAS_WIDTH * scale) / 2;
+  const originY = (h - CANVAS_HEIGHT * scale) / 2;
+  renderer.setViewport(scale, originX, originY);
+  input.setViewport(scale, originX, originY);
+}
+// ResizeObserver 优先（容器尺寸变化即触发，如面板显隐/响应式切换），回退 window resize
+if (typeof ResizeObserver !== 'undefined') {
+  const ro = new ResizeObserver(resizeCanvas);
+  ro.observe(gameWrap);
+} else {
+  window.addEventListener('resize', resizeCanvas);
+}
+resizeCanvas();
 
 // ---------- 音效系统 ----------
 // 注册音效清单（全部本地文件，禁止 URL 远程引用）。首次用户手势后预解码并启用。
@@ -59,25 +83,42 @@ assets.setManifest({
   turret_arrow: 'assets/img/turret_arrow.svg',
   turret_cannon: 'assets/img/turret_cannon.svg',
   turret_magic: 'assets/img/turret_magic.svg',
+  turret_sniper: 'assets/img/turret_sniper.svg',
+  turret_frost: 'assets/img/turret_frost.svg',
+  turret_storm: 'assets/img/turret_storm.svg',
   monster_normal: 'assets/img/monster_normal.svg',
   monster_fast: 'assets/img/monster_fast.svg',
   monster_tank: 'assets/img/monster_tank.svg',
+  monster_swarm: 'assets/img/monster_swarm.svg',
+  monster_armored: 'assets/img/monster_armored.svg',
+  monster_boss: 'assets/img/monster_boss.svg',
   base: 'assets/img/base.svg',
 });
 assets.load();
 
 // ---------- 当前选择的武器 ----------
 let currentWeapon = WeaponType.SWORD;
+const weaponOrder = [
+  WeaponType.SWORD,
+  WeaponType.ARROW,
+  WeaponType.CANNON,
+  WeaponType.MAGIC,
+  WeaponType.SNIPER,
+  WeaponType.FROST,
+  WeaponType.STORM,
+];
 // ---------- 游戏结束状态 ----------
 let gameOver = false;
 let victory = false;
 
-// ---------- HUD ----------
+// ---------- HUD / 武器面板 ----------
 const hudGold = document.getElementById('hud-gold');
 const hudLives = document.getElementById('hud-lives');
 const hudWave = document.getElementById('hud-wave');
 const btnNextWave = document.getElementById('btn-next-wave');
 const btnMute = document.getElementById('btn-mute');
+const weaponGrid = document.getElementById('weapon-grid');
+const weaponDesc = document.getElementById('weapon-desc');
 
 function refreshMuteBtn() {
   if (!btnMute) return;
@@ -87,21 +128,80 @@ function refreshMuteBtn() {
 }
 refreshMuteBtn();
 
+function formatWeaponRange(range) {
+  const cells = range / CONFIG.CELL_SIZE;
+  return Number.isInteger(cells) ? String(cells) : cells.toFixed(1);
+}
+
+function weaponCardMeta(w) {
+  return `${formatWeaponRange(w.range)}格 · ${w.damage}伤 · ${w.fireRate}/s`;
+}
+
+function weaponDetail(w) {
+  const extras = [];
+  if (w.aoe > 0) extras.push('范围溅射');
+  if (w.pierce) extras.push(`穿甲 ${w.pierce}`);
+  if (w.slow) extras.push(`减速 ${Math.round((1 - w.slow.factor) * 100)}%`);
+  if (w.chain) extras.push(`连锁 ${w.chain.count} 跳`);
+  const extraText = extras.length ? ` · ${extras.join(' · ')}` : '';
+  return `${w.name} · ${w.tag} · ${w.cost} 金 · ${w.desc}${extraText}`;
+}
+
+function renderWeaponButtons() {
+  if (!weaponGrid) return;
+  weaponGrid.innerHTML = weaponOrder.map((type, index) => {
+    const w = WEAPONS[type];
+    return `
+      <button class="wpn-btn" data-weapon="${type}" type="button">
+        <span class="wpn-head">
+          <span class="wpn-hotkey">${index + 1}</span>
+          <span class="wpn-tag">${w.tag}</span>
+          <span class="wpn-cost">${w.cost} 金</span>
+        </span>
+        <span class="wpn-name-row">
+          <span class="wpn-name">${w.name}</span>
+          <span class="wpn-state"></span>
+        </span>
+        <span class="wpn-desc">${w.desc}</span>
+        <span class="wpn-meta">${weaponCardMeta(w)}</span>
+      </button>
+    `;
+  }).join('');
+  for (const btn of weaponGrid.querySelectorAll('.wpn-btn')) {
+    btn.addEventListener('click', () => selectWeapon(btn.dataset.weapon));
+  }
+}
+renderWeaponButtons();
+
 function refreshWeaponHud() {
+  const gold = economy.getState().gold;
   const w = WEAPONS[currentWeapon];
-  document.getElementById('weapon-desc').textContent = `${w.name}：${w.desc}`;
-  for (const btn of document.querySelectorAll('.wpn-btn')) {
+  weaponDesc.textContent = weaponDetail(w);
+  for (const [index, btn] of Array.from(document.querySelectorAll('.wpn-btn')).entries()) {
     const t = btn.dataset.weapon;
+    const def = WEAPONS[t];
     const locked = t === WeaponType.MAGIC && !upgrades.magicUnlocked;
+    const affordable = gold >= def.cost;
     btn.classList.toggle('active', t === currentWeapon);
     btn.classList.toggle('locked', locked);
-    btn.disabled = locked && t !== currentWeapon;
+    btn.classList.toggle('is-affordable', affordable && !locked);
+    btn.classList.toggle('is-unaffordable', !affordable && !locked);
+    btn.disabled = locked;
+    btn.querySelector('.wpn-cost').textContent = `${def.cost} 金`;
+    btn.querySelector('.wpn-state').textContent = locked ? '未解锁' : (affordable ? '可部署' : '攒金中');
+    btn.querySelector('.wpn-meta').textContent = weaponCardMeta(def);
+    btn.setAttribute(
+      'aria-label',
+      locked
+        ? `${index + 1} ${def.name}，${def.desc}，当前未解锁`
+        : `${index + 1} ${weaponDetail(def)}`
+    );
   }
 }
 
 function refreshHud({ gold, baseLives }) {
-  hudGold.textContent = `金币: ${gold}`;
-  hudLives.textContent = `基地生命: ${baseLives}`;
+  hudGold.querySelector('.hud-val').textContent = gold;
+  hudLives.querySelector('.hud-val').textContent = baseLives;
 }
 
 /** 刷新升级面板：价格/等级/可用性 + 魔法解锁按钮 */
@@ -111,27 +211,69 @@ function refreshUpgradePanel() {
     const key = btn.dataset.up;
     const lv = upgrades.getLevel(key);
     const d = UPGRADE_DEFS[key];
-    if (lv >= d.maxLevel) {
-      btn.textContent = `${d.label} Lv${lv} · 已满级`;
-      btn.disabled = true;
-    } else {
-      const cost = upgrades.getCost(key);
-      btn.textContent = `${d.label} Lv${lv} → ${lv + 1} · ${cost}金`;
-      btn.disabled = gold < cost;
-    }
+    const maxed = lv >= d.maxLevel;
+    const cost = maxed ? Infinity : upgrades.getCost(key);
+    const currentPct = Math.round(lv * d.perLevel * 100);
+    const nextPct = Math.round(Math.min(d.maxLevel, lv + 1) * d.perLevel * 100);
+    const track = Array.from({ length: d.maxLevel }, (_, i) => {
+      const state = i < lv ? ' is-on' : (!maxed && i === lv ? ' is-next' : '');
+      return `<span class="up-dot${state}"></span>`;
+    }).join('');
+
+    btn.classList.toggle('is-maxed', maxed);
+    btn.classList.toggle('is-affordable', !maxed && gold >= cost);
+    btn.disabled = maxed || gold < cost;
+    btn.setAttribute(
+      'aria-label',
+      maxed
+        ? `${d.label}已满级，当前加成+${currentPct}%`
+        : `${d.label}当前${lv}级，下一级${lv + 1}级，花费${cost}金，当前加成+${currentPct}%，下级+${nextPct}%`
+    );
+    btn.innerHTML = maxed
+      ? `
+        <span class="up-top">
+          <span class="up-name">${d.label}</span>
+          <span class="up-pill">MAX</span>
+        </span>
+        <span class="up-level-row">
+          <span class="up-level">Lv${lv} 已满级</span>
+          <span class="up-delta">总加成 +${currentPct}%</span>
+        </span>
+        <span class="up-track" aria-hidden="true">${track}</span>
+      `
+      : `
+        <span class="up-top">
+          <span class="up-name">${d.label}</span>
+          <span class="up-pill">${cost} 金</span>
+        </span>
+        <span class="up-level-row">
+          <span class="up-level">Lv${lv} → Lv${lv + 1}</span>
+          <span class="up-delta">当前 +${currentPct}% · 下级 +${nextPct}%</span>
+        </span>
+        <span class="up-track" aria-hidden="true">${track}</span>
+      `;
   }
   const unlockBtn = document.getElementById('btn-unlock-magic');
   if (upgrades.magicUnlocked) {
     unlockBtn.classList.add('hidden');
+    unlockBtn.classList.remove('is-affordable');
   } else {
+    const unlockCost = upgrades.getMagicUnlockCost();
     unlockBtn.classList.remove('hidden');
-    unlockBtn.disabled = gold < upgrades.getMagicUnlockCost();
+    unlockBtn.classList.toggle('is-affordable', gold >= unlockCost);
+    unlockBtn.disabled = gold < unlockCost;
+    unlockBtn.setAttribute('aria-label', `解锁魔法塔，花费${unlockCost}金`);
+    unlockBtn.innerHTML = `
+      <span class="unlock-title">解锁魔法塔</span>
+      <span class="unlock-meta">额外武器位 · ${unlockCost} 金</span>
+    `;
   }
 }
 
 economy.onChange((state) => {
   refreshHud(state);
   refreshUpgradePanel();
+  refreshWeaponHud();
 });
 upgrades.onChange(() => {
   refreshUpgradePanel();
@@ -152,10 +294,15 @@ function selectWeapon(type) {
   currentWeapon = type;
   refreshWeaponHud();
 }
-for (const btn of document.querySelectorAll('.wpn-btn')) {
-  btn.addEventListener('click', () => selectWeapon(btn.dataset.weapon));
-}
-const weaponKeys = { 1: WeaponType.SWORD, 2: WeaponType.ARROW, 3: WeaponType.CANNON, 4: WeaponType.MAGIC };
+const weaponKeys = {
+  1: WeaponType.SWORD,
+  2: WeaponType.ARROW,
+  3: WeaponType.CANNON,
+  4: WeaponType.MAGIC,
+  5: WeaponType.SNIPER,
+  6: WeaponType.FROST,
+  7: WeaponType.STORM,
+};
 window.addEventListener('keydown', (e) => {
   if (weaponKeys[e.key]) selectWeapon(weaponKeys[e.key]);
 });
@@ -272,11 +419,9 @@ function render() {
   renderer.drawBase(map.baseCell.col, map.baseCell.row, { image: assets.get('base') });
 
   // 波次 HUD + 按钮状态
-  let waveText = `波次: ${waves.waveIndex}/${waves.maxWaves}`;
-  if (!gameOver && waves.waveIndex > 0 && !waves.isWaveInProgress() && waves.waveIndex < waves.maxWaves) {
-    waveText += ` · 下一波 ${Math.ceil(waves.nextWaveIn)}s`;
-  }
-  hudWave.textContent = waveText;
+  hudWave.querySelector('.hud-val').textContent = `${waves.waveIndex}/${waves.maxWaves}`;
+  const showCountdown = !gameOver && waves.waveIndex > 0 && !waves.isWaveInProgress() && waves.waveIndex < waves.maxWaves;
+  hudWave.querySelector('.hud-sub').textContent = showCountdown ? `${Math.ceil(waves.nextWaveIn)}s` : '';
   btnNextWave.disabled = gameOver || waves.isWaveInProgress() || waves.waveIndex >= waves.maxWaves;
 
   // 士兵（武器图片 + 范围 + 炮塔朝向；图片未就绪时回退程序化绘制）
@@ -294,6 +439,7 @@ function render() {
     renderer.drawMonster(m.x, m.y, CONFIG.CELL_SIZE * m.radius, {
       image: assets.get(`monster_${m.key}`),
       color: m.color,
+      slowed: m.isSlowed,
     });
     renderer.drawHealthBar(m.x, m.y - CONFIG.CELL_SIZE * 0.42, CONFIG.CELL_SIZE * 0.6, m.hpRatio);
   }

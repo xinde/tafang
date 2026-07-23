@@ -115,27 +115,31 @@ export class Soldier {
 
   _fire(target, ctx) {
     const w = this.weapon;
-    // 不同武器不同开火音效（剑/弓/炮/魔 各一种）
-    audio.play(`fire_${w.type}`);
+    // 不同武器可映射到不同本地音效；未显式指定时回退到按类型取名
+    audio.play(w.fireSfx || `fire_${w.type}`);
     if (w.projectileSpeed > 0) {
-      // 弹道武器（箭/炮弹）
       ctx.projectiles.add(new Projectile({
         x: this.x, y: this.y,
         target,
         speed: w.projectileSpeed,
         damage: this.damage,
         aoe: w.aoe,
+        pierce: w.pierce,
+        slow: w.slow,
+        chain: w.chain,
         color: w.color,
-        radius: w.type === WeaponType.CANNON ? 6 : 4,
+        radius: w.projRadius || 4,
         weaponType: w.type,
+        hitSfx: w.hitSfx,
       }));
     } else {
       // 近战即时命中 + 斩击弧光
-      target.takeDamage(this.damage);
+      const dmg = target.takeDamage(this.damage, w.pierce || 0);
+      if (w.slow) target.applySlow(w.slow.factor, w.slow.duration);
       const angle = Math.atan2(target.y - this.y, target.x - this.x);
       if (ctx.effects) {
         ctx.effects.spawnSlash(this.x, this.y, angle, w.color);
-        ctx.effects.spawnDamage(target.x, target.y, this.damage, w.color);
+        ctx.effects.spawnDamage(target.x, target.y, dmg, w.color);
       }
     }
   }

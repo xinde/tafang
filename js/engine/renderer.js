@@ -12,12 +12,29 @@ export class Renderer {
     this.cellSize = grid.cellSize;
     this.cols = grid.cols;
     this.rows = grid.rows;
-    this.width = grid.cols * grid.cellSize;
-    this.height = grid.rows * grid.cellSize;
+    this.width = grid.cols * grid.cellSize;   // 逻辑宽度（固定 960）
+    this.height = grid.rows * grid.cellSize;  // 逻辑高度（固定 576）
+    // 视口变换：把逻辑 960×576 居中、等比缩放进实际画布尺寸
+    this.viewScale = 1;
+    this.viewOriginX = 0;
+    this.viewOriginY = 0;
+  }
+
+  /** 由 main 在 resize 时注入：逻辑坐标 -> 画布像素坐标的等比缩放与居中偏移 */
+  setViewport(scale, originX, originY) {
+    this.viewScale = scale || 1;
+    this.viewOriginX = originX || 0;
+    this.viewOriginY = originY || 0;
   }
 
   clear() {
-    this.ctx.clearRect(0, 0, this.width, this.height);
+    const { ctx } = this;
+    // 先重置变换，清空并填满整个画布（含等比缩放后的留白区域），避免残影
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = '#0f0f1e';
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    // 再应用逻辑->显示变换，后续所有绘制使用逻辑坐标
+    ctx.setTransform(this.viewScale, 0, 0, this.viewScale, this.viewOriginX, this.viewOriginY);
   }
 
   /** 网格单元格像素坐标 */
@@ -160,14 +177,22 @@ export class Renderer {
     }
   }
 
-  /** 绘制怪兽：有图片则 drawImage，否则回退到 drawCircle */
+  /** 绘制怪兽：有图片则 drawImage，否则回退到 drawCircle；被减速时加一圈寒冰外环 */
   drawMonster(x, y, radius, opts = {}) {
     if (opts.image) {
       const d = radius * 2;
       this.ctx.drawImage(opts.image, x - radius, y - radius, d, d);
-      return;
+    } else {
+      this.drawCircle(x, y, radius, opts.color);
     }
-    this.drawCircle(x, y, radius, opts.color);
+    if (opts.slowed) {
+      const { ctx } = this;
+      ctx.strokeStyle = 'rgba(95,208,232,0.92)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, radius + 3, 0, Math.PI * 2);
+      ctx.stroke();
+    }
   }
 
   /** 通用线段（弹道轨迹/连线） */

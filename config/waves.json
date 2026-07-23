@@ -1,0 +1,42 @@
+{
+  "_doc": {
+    "说明": "塔防关卡/波次配置。新增或调整关卡只改本文件，无需改动代码。波数从 1 开始。",
+    "maxWaves": "通关波数（打满即胜利）",
+    "spawnInterval": "同波内相邻怪兽生成间隔（秒）",
+    "autoStartDelay": "一波清空后自动开下一波的倒计时（秒）",
+    "growth.baseCount": "第1波基础数量，count = baseCount + 波数*countPerWave",
+    "growth.countPerWave": "每波递增的怪兽数量",
+    "growth.hpScalePerWave": "血量递增系数，hpScale = 1 + (波数-1)*本值",
+    "growth.speedScalePerWave": "速度递增系数，speedScale = 1 + min(speedScaleCap, (波数-1)*本值)",
+    "growth.speedScaleCap": "速度增幅上限（相对基础速度的比例）",
+    "growth.rewardBonusEveryWaves": "每 N 波金币奖励 +1，rewardBonus = floor((波数-1)/N)",
+    "growth.armorBonusEveryWaves": "每 N 波护甲 +1，armorBonus = floor((波数-1)/N)",
+    "unlock": "各进阶类型解锁波数（到达该波起才可能出现），键为怪兽类型 key",
+    "distribution": "确定性类型分配：按数组顺序逐个匹配，首个命中生效，未解锁的类型自动落空。every/offset 表示每 every 只中的第 offset 只（槽位 i % every === offset）",
+    "boss.every": "每 N 波追加一只 BOSS（波数 % N === 0）",
+    "random.minWave": "从第几波起启用随机化（随机额外怪兽 + 普通怪随机升级）",
+    "random.upgradeChance": "普通怪被随机升级为某个已解锁进阶类型的概率",
+    "random.extraMax": "每波随机额外怪兽上限（随机 0..extraMax 只，类型从已解锁池随机）"
+  },
+  "maxWaves": 20,
+  "spawnInterval": 0.8,
+  "autoStartDelay": 3.0,
+  "growth": {
+    "baseCount": 4,
+    "countPerWave": 2,
+    "hpScalePerWave": 0.25,
+    "speedScalePerWave": 0.05,
+    "speedScaleCap": 0.6,
+    "rewardBonusEveryWaves": 2,
+    "armorBonusEveryWaves": 4
+  },
+  "unlock": { "fast": 2, "tank": 3, "swarm": 6, "armored": 8 },
+  "distribution": [
+    { "type": "armored", "every": 7, "offset": 6 },
+    { "type": "swarm",   "every": 4, "offset": 3 },
+    { "type": "tank",    "every": 5, "offset": 4 },
+    { "type": "fast",    "every": 3, "offset": 2 }
+  ],
+  "boss": { "every": 5 },
+  "random": { "minWave": 2, "upgradeChance": 0.12, "extraMax": 2 }
+}

@@ -26,9 +26,15 @@ https://creativecommons.org/publicdomain/zero/1.0/
 | turret_arrow.svg | 弓箭塔（朝右） | renderer.drawSoldier 旋转绘制 |
 | turret_cannon.svg | 炮塔（朝右） | renderer.drawSoldier 旋转绘制 |
 | turret_magic.svg | 魔法塔（朝右） | renderer.drawSoldier 旋转绘制 |
+| turret_sniper.svg | 狙击塔（朝右） | renderer.drawSoldier 旋转绘制 |
+| turret_frost.svg | 寒冰塔（朝右） | renderer.drawSoldier 旋转绘制 |
+| turret_storm.svg | 雷霆塔（朝右） | renderer.drawSoldier 旋转绘制 |
 | monster_normal.svg | 普通怪兽 | renderer.drawMonster |
 | monster_fast.svg | 快速怪兽 | renderer.drawMonster |
 | monster_tank.svg | 坦克怪兽 | renderer.drawMonster |
+| monster_swarm.svg | 虫群怪兽（成群弱小快速） | renderer.drawMonster |
+| monster_armored.svg | 装甲怪兽（带护甲减伤） | renderer.drawMonster |
+| monster_boss.svg | Boss（每 5 波出现一只） | renderer.drawMonster |
 | base.svg | 基地城堡 | renderer.drawBase |
 
 ## 约定

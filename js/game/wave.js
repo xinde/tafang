@@ -1,34 +1,43 @@
 import { Monster, MonsterType } from './monster.js';
-import { CONFIG } from '../config.js';
 import { audio } from '../engine/audio.js';
 
-// 波次节奏常量（集中在 wave 模块，避免改动公共 config）
-const SPAWN_INTERVAL = 0.8;   // 同波内相邻怪兽生成间隔（秒）
-const AUTO_START_DELAY = 3.0; // 一波清空后自动开下一波的倒计时（秒）
+// 进阶怪兽类型按 key 索引，供关卡配置 distribution 引用（type -> MonsterType）
+const ADVANCED_BY_KEY = {
+  fast: MonsterType.FAST,
+  tank: MonsterType.TANK,
+  swarm: MonsterType.SWARM,
+  armored: MonsterType.ARMORED,
+};
 
 /**
  * WaveManager：按波生成怪兽并驱动其移动与结算。
  * - startNextWave() 由“开始下一波”按钮或波间隔自动触发。
- * - 波数越高：数量越多、血量越厚、速度越快，并逐步引入 FAST / TANK 类型。
+ * - 波数越高：数量越多、血量/速度/护甲越强，并逐步引入 FAST / TANK / SWARM / ARMORED；
+ *   每 5 波（5/10/15/20）追加一只 BOSS。波次组合与出现顺序含随机性，每局体验不同。
  * - update(dt, economy, effects?)：生成 → 移动 → 结算（漏怪扣基地血 / 击杀掉金币）。
  *   effects 可选，用于怪兽死亡爆裂特效。
+ * - 所有波次参数（数量/缩放/解锁/Boss/随机/节奏）来自外部注入的关卡配置 levelConfig；
+ *   主游戏启动时从本地 config/waves.json 导入后传入，新增或调整关卡只改 JSON，无需改本类。
  */
 export class WaveManager {
   /**
    * @param {GameMap} map
+   * @param {object} levelConfig 关卡/波次配置（结构见 config/waves.json）
    */
-  constructor(map) {
+  constructor(map, levelConfig) {
+    if (!levelConfig) throw new Error('WaveManager 需要关卡配置 levelConfig（来自 config/waves.json）');
     this.map = map;
+    this._config = levelConfig;  // 关卡/波次配置
     this.waveIndex = 0;          // 已开始的波数（0 = 尚未开波）
-    this.maxWaves = CONFIG.MAX_WAVES; // 通关波数
+    this.maxWaves = levelConfig.maxWaves; // 通关波数
     /** @type {Monster[]} */
     this.active = [];            // 场上存活怪兽
     this._queue = [];            // 本波待生成的怪兽配置
     this._spawnTimer = 0;
-    this.spawnInterval = SPAWN_INTERVAL;
+    this.spawnInterval = levelConfig.spawnInterval;
     this.spawning = false;
-    this.autoStartDelay = AUTO_START_DELAY;
-    this._interWaveTimer = AUTO_START_DELAY;
+    this.autoStartDelay = levelConfig.autoStartDelay;
+    this._interWaveTimer = levelConfig.autoStartDelay;
   }
 
   /** 是否有波正在进行（仍在生成或场上还有怪兽） */
@@ -47,29 +56,105 @@ export class WaveManager {
   }
 
   /**
-   * 按波数构造生成队列：数量/血量/速度递增，高波引入更快/更硬类型。
+   * 按波数构造生成队列：数量/血量/速度/护甲递增，高波逐步引入新类型，并加入随机性。
+   * 所有数值取自 this._config（config/waves.json），以下为默认值对应的曲线：
+   * - 类型解锁：FAST@2、TANK@3、SWARM@6、ARMORED@8；BOSS 出现于每 5 波（5/10/15/20）。
+   * - 数量：基础 4 + index*2；第 2 波起额外随机 +0..2 只（每局不同）。
+   * - 血量：1 + (index-1)*0.25；速度：封顶 +60%；护甲加成：每 4 波 +1。
+   * - 随机性：①部分 NORMAL 槽位随机升级为已解锁的高阶类型；②生成顺序整体洗牌。
+   *
+   * 不变量（回归测试依赖）：第 1 波恒为 6 只全 NORMAL；第 5 波必含 FAST 与 TANK、
+   * 且任一怪兽血量均 > 第 1 波首怪（20）。
+   *
    * @param {number} index 波数（从 1 开始）
    */
   _buildWave(index) {
-    const count = 4 + index * 2;                    // 数量递增
-    const hpScale = 1 + (index - 1) * 0.25;         // 血量递增
-    const speedScale = 1 + Math.min(0.5, (index - 1) * 0.05); // 速度递增（封顶 +50%）
-    const rewardBonus = Math.floor((index - 1) / 2);// 高波金币略增
+    const cfg = this._config;
+    const g = cfg.growth;
+    const count = g.baseCount + index * g.countPerWave;          // 基础数量
+    const hpScale = 1 + (index - 1) * g.hpScalePerWave;          // 血量递增
+    const speedScale = 1 + Math.min(g.speedScaleCap, (index - 1) * g.speedScalePerWave); // 速度递增（封顶）
+    const rewardBonus = Math.floor((index - 1) / g.rewardBonusEveryWaves); // 高波金币略增
+    const armorBonus = Math.floor((index - 1) / g.armorBonusEveryWaves);   // 护甲随波缓慢增长
+
+    const unlocked = {
+      fast: index >= cfg.unlock.fast,
+      tank: index >= cfg.unlock.tank,
+      swarm: index >= cfg.unlock.swarm,
+      armored: index >= cfg.unlock.armored,
+    };
+    const isBossWave = index > 0 && index % cfg.boss.every === 0; // 5/10/15/20
+
     const queue = [];
     for (let i = 0; i < count; i++) {
       let t = MonsterType.NORMAL;
-      if (index >= 3 && i % 5 === 4) t = MonsterType.TANK;       // 第3波起每5只一个坦克
-      else if (index >= 2 && i % 3 === 2) t = MonsterType.FAST;  // 第2波起每3只一个快速
-      queue.push({
-        key: t.key,
-        hp: Math.round(t.hp * hpScale),
-        speed: t.speed * speedScale,
-        reward: t.reward + rewardBonus,
-        radius: t.radius,
-        color: t.color,
-      });
+      // 确定性基础类型分配：按 distribution 顺序逐个匹配，首个命中生效（未解锁自动落空），
+      // 保证类型解锁后稳定出场，非仅靠随机。
+      for (const d of cfg.distribution) {
+        if (index >= cfg.unlock[d.type] && i % d.every === d.offset) {
+          t = ADVANCED_BY_KEY[d.type];
+          break;
+        }
+      }
+
+      // 随机升级：第2波起，少量 NORMAL 槽位升级为已解锁的高阶类型（每局不同）
+      if (index >= cfg.random.minWave && t === MonsterType.NORMAL && Math.random() < cfg.random.upgradeChance) {
+        const upgrades = [];
+        if (unlocked.fast) upgrades.push(MonsterType.FAST);
+        if (unlocked.tank) upgrades.push(MonsterType.TANK);
+        if (unlocked.swarm) upgrades.push(MonsterType.SWARM);
+        if (unlocked.armored) upgrades.push(MonsterType.ARMORED);
+        if (upgrades.length) t = upgrades[Math.floor(Math.random() * upgrades.length)];
+      }
+      queue.push(this._makeMonster(t, hpScale, speedScale, rewardBonus, armorBonus));
     }
+
+    // 随机额外怪兽：第2波起 +0..extraMax 只（类型从已解锁池随机）
+    if (index >= cfg.random.minWave) {
+      const extra = Math.floor(Math.random() * (cfg.random.extraMax + 1));
+      for (let i = 0; i < extra; i++) {
+        const pool = [MonsterType.NORMAL];
+        if (unlocked.fast) pool.push(MonsterType.FAST);
+        if (unlocked.tank) pool.push(MonsterType.TANK);
+        if (unlocked.swarm) pool.push(MonsterType.SWARM);
+        if (unlocked.armored) pool.push(MonsterType.ARMORED);
+        const t = pool[Math.floor(Math.random() * pool.length)];
+        queue.push(this._makeMonster(t, hpScale, speedScale, rewardBonus, armorBonus));
+      }
+    }
+
+    // Boss 波：追加一只 BOSS（高血量/高奖励/带护甲），作为阶段性强敌
+    if (isBossWave) {
+      queue.push(this._makeMonster(MonsterType.BOSS, hpScale, speedScale, rewardBonus, armorBonus));
+    }
+
+    // 洗牌生成顺序：使每波出现次序随机（第1波全 NORMAL，洗牌不影响类型分布）
+    this._shuffle(queue);
     return queue;
+  }
+
+  /** 按类型模板与波次缩放系数生成一只怪兽配置 */
+  _makeMonster(t, hpScale, speedScale, rewardBonus, armorBonus) {
+    return {
+      key: t.key,
+      hp: Math.round(t.hp * hpScale),
+      speed: t.speed * speedScale,
+      reward: t.reward + rewardBonus,
+      radius: t.radius,
+      color: t.color,
+      armor: t.armor + armorBonus,
+    };
+  }
+
+  /** Fisher-Yates 原地洗牌 */
+  _shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = arr[i];
+      arr[i] = arr[j];
+      arr[j] = tmp;
+    }
+    return arr;
   }
 
   /**

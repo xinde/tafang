@@ -16,6 +16,11 @@ export class Input {
     /** 鼠标当前所在的网格单元 {col,row}，不在画布内为 null */
     this.hoverCell = null;
 
+    // 视口变换（与 Renderer 共享）：屏幕像素 -> 逻辑坐标
+    this.viewScale = 1;
+    this.viewOriginX = 0;
+    this.viewOriginY = 0;
+
     this._onClick = null;
     this._onRightClick = null;
     this._onMove = null;
@@ -42,14 +47,24 @@ export class Input {
   /** 注册移动回调，参数为网格坐标 {col,row} 或 null */
   onCellMove(fn) { this._onMove = fn; }
 
+  /** 由 main 在 resize 时注入：与 Renderer 一致的等比缩放与居中偏移 */
+  setViewport(scale, originX, originY) {
+    this.viewScale = scale || 1;
+    this.viewOriginX = originX || 0;
+    this.viewOriginY = originY || 0;
+  }
+
   /** 把鼠标事件换算为网格坐标；越界返回 null */
   _eventToCell(e) {
     const rect = this.canvas.getBoundingClientRect();
-    // 处理 canvas CSS 尺寸与实际分辨率不一致的情况
+    // canvas CSS 尺寸与实际分辨率（含 DPR）的比例
     const scaleX = this.canvas.width / rect.width;
     const scaleY = this.canvas.height / rect.height;
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
+    // 先到画布像素坐标，再反推逻辑坐标（扣除居中偏移、除以等比缩放）
+    const dx = (e.clientX - rect.left) * scaleX;
+    const dy = (e.clientY - rect.top) * scaleY;
+    const x = (dx - this.viewOriginX) / this.viewScale;
+    const y = (dy - this.viewOriginY) / this.viewScale;
     const col = Math.floor(x / this.cellSize);
     const row = Math.floor(y / this.cellSize);
     if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) return null;

@@ -11,11 +11,25 @@
     <div id="game-wrap">
       <canvas id="game-canvas"></canvas>
       <div id="hud">
-        <span id="hud-gold">金币: 0</span>
-        <span id="hud-lives">基地生命: 0</span>
-        <span id="hud-wave">波次: 0</span>
-        <button id="btn-next-wave">开始下一波</button>
-        <button id="btn-mute" class="mute-btn" aria-pressed="false" title="开关音效">静音</button>
+        <div id="hud-stats">
+          <span class="hud-stat is-gold" id="hud-gold" title="金币">
+            <svg class="hud-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#ffd24a" stroke="#a87800" stroke-width="1.6"/><circle cx="12" cy="12" r="4.8" fill="none" stroke="#a87800" stroke-width="1.3"/><path d="M12 7.2 L13.3 10.6 L16.9 10.6 L13.9 12.9 L15.1 16.4 L12 14.2 L8.9 16.4 L10.1 12.9 L7.1 10.6 L10.7 10.6 Z" fill="#a87800"/></svg>
+            <span class="hud-val">0</span>
+          </span>
+          <span class="hud-stat is-lives" id="hud-lives" title="基地生命">
+            <svg class="hud-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.9-7.5-10.4C4.5 7.5 7 5 9.5 5c1.7 0 3 .9 3.5 2 .5-1.1 1.8-2 3.5-2 2.5 0 5 2.5 5 5.6 0 5.5-7.5 10.4-7.5 10.4z" fill="#e05555" stroke="#8a2a2a" stroke-width="1.3"/></svg>
+            <span class="hud-val">0</span>
+          </span>
+          <span class="hud-stat is-wave" id="hud-wave" title="波次">
+            <svg class="hud-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v18" stroke="#cfcfcf" stroke-width="1.8" stroke-linecap="round"/><path d="M6 4h12l-2.8 3.6L18 11H6z" fill="#5a8ad0" stroke="#2a4a8a" stroke-width="1.2"/></svg>
+            <span class="hud-val">0/0</span>
+            <span class="hud-sub"></span>
+          </span>
+        </div>
+        <div id="hud-actions">
+          <button id="btn-next-wave">开始下一波</button>
+          <button id="btn-mute" class="mute-btn" aria-pressed="false" title="开关音效">静音</button>
+        </div>
       </div>
       <div id="overlay" class="hidden">
         <div class="overlay-card">
@@ -27,8 +41,9 @@
     </div>
 
     <aside id="side-panel">
-      <div class="panel-section">
+      <div class="panel-section upgrade-panel">
         <h3>全局强化</h3>
+        <p class="panel-caption">作用于全部已部署与后续士兵</p>
         <button class="up-btn" data-up="damage"></button>
         <button class="up-btn" data-up="fireRate"></button>
         <button class="up-btn" data-up="range"></button>
@@ -36,12 +51,8 @@
 
       <div class="panel-section">
         <h3>武器选择</h3>
-        <div class="weapon-row">
-          <button class="wpn-btn" data-weapon="sword">1 剑</button>
-          <button class="wpn-btn" data-weapon="arrow">2 弓</button>
-          <button class="wpn-btn" data-weapon="cannon">3 炮</button>
-          <button class="wpn-btn" data-weapon="magic" id="btn-magic">4 魔</button>
-        </div>
+        <p class="panel-caption">点击卡片选择，1-7 快捷切换</p>
+        <div class="weapon-grid" id="weapon-grid"></div>
         <button id="btn-unlock-magic">解锁魔法塔 · 120金</button>
         <p id="weapon-desc" class="hint"></p>
       </div>
@@ -50,9 +61,9 @@
         <h3>操作说明</h3>
         <p>点击空地放置当前武器士兵</p>
         <p>右键点击士兵出售（返还 50% 金币）</p>
-        <p>1/2/3/4 切换武器</p>
+        <p>1/2/3/4/5/6/7 切换武器</p>
         <p>击杀怪兽得金币，漏怪扣基地血</p>
-        <p>打满 10 波即胜利</p>
+        <p>打满全部波次即胜利</p>
       </div>
     </aside>
   </div>
