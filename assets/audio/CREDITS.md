@@ -40,6 +40,7 @@ https://creativecommons.org/publicdomain/zero/1.0/
 | victory.wav | 胜利（大调上行） | main.update 胜利 |
 | gameover.wav | 失败（下行） | main.update 失败 |
 | button.wav | 通用 UI 点击 | main.selectWeapon / 取消静音 |
+| tower_down.wav | 防御塔被远程摧毁（金属垮塌 + 低频） | wave.update 塔损结算 |
 
 ## 重新生成
 

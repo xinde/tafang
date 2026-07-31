@@ -21,6 +21,14 @@ export class EffectManager {
     });
   }
 
+  /** 回血飘字（击杀者生命窃取），颜色绿、前缀 + */
+  spawnHeal(x, y, amount) {
+    this.effects.push({
+      kind: 'heal', x, y, amount: Math.round(amount), color: '#58d968',
+      life: 0.7, maxLife: 0.7, vy: -34,
+    });
+  }
+
   /** 炮击溅射冲击环 */
   spawnBlast(x, y, radius, color = '#e07b3a') {
     this.effects.push({
@@ -68,6 +76,12 @@ export class EffectManager {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(`-${e.amount}`, e.x, e.y);
+      } else if (e.kind === 'heal') {
+        ctx.fillStyle = e.color;
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`+${e.amount}`, e.x, e.y);
       } else if (e.kind === 'blast') {
         const r = e.radius * (1 - t * 0.4);
         ctx.strokeStyle = e.color;

@@ -188,11 +188,15 @@ const gameover = normalize(concat(
   tone({ dur: 0.36, freq: 262, type: 'tri', decay: 0.22, gain: 0.6 }),
 ));                                                                                                                        // 失败：下行
 const button = normalize(tone({ dur: 0.05, freq: 1000, type: 'sine', attack: 0.001, decay: 0.03, gain: 0.45 }));          // 通用 UI 点击
+const tower_down = normalize(mix(
+  tone({ dur: 0.28, freq: 260, freqEnd: 90, type: 'saw', attack: 0.004, decay: 0.12, gain: 0.6 }),
+  noiseBurst({ dur: 0.2, attack: 0.003, decay: 0.09, gain: 0.45, filter: 'lp' }),
+));                                                                                                                        // 防御塔损毁：金属垮塌 + 低频
 
 const SOUNDS = {
   fire_sword, fire_arrow, fire_cannon, fire_magic,
   hit_arrow, hit_cannon, hit_magic,
-  place, upgrade, sell, wave_start, kill, leak, coin, victory, gameover, button,
+  place, upgrade, sell, wave_start, kill, leak, coin, victory, gameover, button, tower_down,
 };
 
 // ---------- 输出 ----------

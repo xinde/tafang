@@ -34,7 +34,8 @@ https://creativecommons.org/publicdomain/zero/1.0/
 | monster_tank.svg | 坦克怪兽 | renderer.drawMonster |
 | monster_swarm.svg | 虫群怪兽（成群弱小快速） | renderer.drawMonster |
 | monster_armored.svg | 装甲怪兽（带护甲减伤） | renderer.drawMonster |
-| monster_boss.svg | Boss（每 5 波出现一只） | renderer.drawMonster |
+| monster_mage.svg | 法师怪兽（远程攻击防御塔/基地） | renderer.drawMonster |
+| monster_boss.svg | Boss（每 5 波出现一只，可远程） | renderer.drawMonster |
 | base.svg | 基地城堡 | renderer.drawBase |
 
 ## 约定

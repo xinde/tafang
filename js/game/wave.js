@@ -7,6 +7,7 @@ const ADVANCED_BY_KEY = {
   tank: MonsterType.TANK,
   swarm: MonsterType.SWARM,
   armored: MonsterType.ARMORED,
+  mage: MonsterType.MAGE,
 };
 
 /**
@@ -23,11 +24,14 @@ export class WaveManager {
   /**
    * @param {GameMap} map
    * @param {object} levelConfig 关卡/波次配置（结构见 config/waves.json）
+   * @param {object} [combat] 战斗上下文（远程敌人攻击目标）
+   * @param {SoldierManager} [combat.soldiers] 已部署防御塔，远程敌人优先攻击
    */
-  constructor(map, levelConfig) {
+  constructor(map, levelConfig, combat = {}) {
     if (!levelConfig) throw new Error('WaveManager 需要关卡配置 levelConfig（来自 config/waves.json）');
     this.map = map;
     this._config = levelConfig;  // 关卡/波次配置
+    this.combat = combat;        // 战斗上下文（soldiers 等）
     this.waveIndex = 0;          // 已开始的波数（0 = 尚未开波）
     this.maxWaves = levelConfig.maxWaves; // 通关波数
     /** @type {Monster[]} */
@@ -76,12 +80,14 @@ export class WaveManager {
     const speedScale = 1 + Math.min(g.speedScaleCap, (index - 1) * g.speedScalePerWave); // 速度递增（封顶）
     const rewardBonus = Math.floor((index - 1) / g.rewardBonusEveryWaves); // 高波金币略增
     const armorBonus = Math.floor((index - 1) / g.armorBonusEveryWaves);   // 护甲随波缓慢增长
+    const dmgScale = 1 + (index - 1) * g.rangedDamagePerWave;    // 远程伤害递增（法师/BOSS）
 
     const unlocked = {
       fast: index >= cfg.unlock.fast,
       tank: index >= cfg.unlock.tank,
       swarm: index >= cfg.unlock.swarm,
       armored: index >= cfg.unlock.armored,
+      mage: index >= cfg.unlock.mage,
     };
     const isBossWave = index > 0 && index % cfg.boss.every === 0; // 5/10/15/20
 
@@ -104,9 +110,10 @@ export class WaveManager {
         if (unlocked.tank) upgrades.push(MonsterType.TANK);
         if (unlocked.swarm) upgrades.push(MonsterType.SWARM);
         if (unlocked.armored) upgrades.push(MonsterType.ARMORED);
+        if (unlocked.mage) upgrades.push(MonsterType.MAGE);
         if (upgrades.length) t = upgrades[Math.floor(Math.random() * upgrades.length)];
       }
-      queue.push(this._makeMonster(t, hpScale, speedScale, rewardBonus, armorBonus));
+      queue.push(this._makeMonster(t, hpScale, speedScale, rewardBonus, armorBonus, dmgScale));
     }
 
     // 随机额外怪兽：第2波起 +0..extraMax 只（类型从已解锁池随机）
@@ -118,14 +125,15 @@ export class WaveManager {
         if (unlocked.tank) pool.push(MonsterType.TANK);
         if (unlocked.swarm) pool.push(MonsterType.SWARM);
         if (unlocked.armored) pool.push(MonsterType.ARMORED);
+        if (unlocked.mage) pool.push(MonsterType.MAGE);
         const t = pool[Math.floor(Math.random() * pool.length)];
-        queue.push(this._makeMonster(t, hpScale, speedScale, rewardBonus, armorBonus));
+        queue.push(this._makeMonster(t, hpScale, speedScale, rewardBonus, armorBonus, dmgScale));
       }
     }
 
-    // Boss 波：追加一只 BOSS（高血量/高奖励/带护甲），作为阶段性强敌
+    // Boss 波：追加一只 BOSS（高血量/高奖励/带护甲/可远程），作为阶段性强敌
     if (isBossWave) {
-      queue.push(this._makeMonster(MonsterType.BOSS, hpScale, speedScale, rewardBonus, armorBonus));
+      queue.push(this._makeMonster(MonsterType.BOSS, hpScale, speedScale, rewardBonus, armorBonus, dmgScale));
     }
 
     // 洗牌生成顺序：使每波出现次序随机（第1波全 NORMAL，洗牌不影响类型分布）
@@ -134,7 +142,21 @@ export class WaveManager {
   }
 
   /** 按类型模板与波次缩放系数生成一只怪兽配置 */
-  _makeMonster(t, hpScale, speedScale, rewardBonus, armorBonus) {
+  _makeMonster(t, hpScale, speedScale, rewardBonus, armorBonus, dmgScale) {
+    const ranged = t.ranged
+      ? {
+          range: t.ranged.range,
+          damage: Math.round(t.ranged.damage * dmgScale),
+          fireRate: t.ranged.fireRate,
+          projectileSpeed: t.ranged.projectileSpeed,
+          projColor: t.ranged.projColor,
+          projRadius: t.ranged.projRadius,
+          moveFactor: t.ranged.moveFactor,
+          healOnKill: t.ranged.healOnKill,
+          fireSfx: t.ranged.fireSfx,
+          hitSfx: t.ranged.hitSfx,
+        }
+      : undefined;
     return {
       key: t.key,
       hp: Math.round(t.hp * hpScale),
@@ -143,6 +165,7 @@ export class WaveManager {
       radius: t.radius,
       color: t.color,
       armor: t.armor + armorBonus,
+      ...(ranged ? { ranged } : {}),
     };
   }
 
@@ -176,9 +199,10 @@ export class WaveManager {
   /**
    * @param {number} dt 固定步长（秒）
    * @param {Economy} economy
-   * @param {EffectManager} [effects] 可选，怪兽死亡时播放爆裂特效
+   * @param {EffectManager} [effects] 可选，怪兽死亡/防御塔损毁时播放爆裂特效
+   * @param {ProjectileManager} [projectiles] 弹道管理器（远程敌人开火入队）
    */
-  update(dt, economy, effects) {
+  update(dt, economy, effects, projectiles) {
     // 1) 逐只生成
     if (this.spawning) {
       this._spawnTimer -= dt;
@@ -190,8 +214,25 @@ export class WaveManager {
       if (this._queue.length === 0) this.spawning = false;
     }
 
-    // 2) 移动
-    for (const m of this.active) m.update(dt);
+    // 2) 移动 / 远程攻击：远程怪射程内有目标则停下射击，否则继续行进
+    const cs = this.map.cellSize;
+    const bc = this.map.baseCell;
+    const monsterCombat = {
+      soldiers: (this.combat && this.combat.soldiers) ? this.combat.soldiers.getAll() : [],
+      base: {
+        x: bc.col * cs + cs / 2,
+        y: bc.row * cs + cs / 2,
+        lives: economy.baseLives,
+        // 基地以 takeDamage 代理漏怪扣血（命中 = 漏一次），保证 projectile 接口一致
+        alive: economy.baseLives > 0,
+        takeDamage: () => { economy.damageBase(1); return 1; },
+      },
+      projectiles,
+    };
+    for (const m of this.active) {
+      const speedMul = m.updateRanged(dt, monsterCombat); // 攻击中返回 moveFactor（缓慢移动）
+      m.update(dt, { speedMul });                          // 边打边走，不原地站桩
+    }
 
     // 3) 结算：漏怪扣基地血 / 击杀掉金币 + 死亡特效
     for (let i = this.active.length - 1; i >= 0; i--) {
@@ -208,7 +249,26 @@ export class WaveManager {
       }
     }
 
-    // 4) 波间隔：已开过至少一波、当前无波进行中、未打满、游戏未结束时自动开下一波
+    // 4) 被摧毁的防御塔：释放格子 + 返还 50% 成本 + 爆裂特效 + 击杀者回血
+    const soldiers = (this.combat && this.combat.soldiers) || null;
+    if (soldiers) {
+      const destroyed = soldiers.getAll().filter((s) => !s.alive);
+      for (const s of destroyed) {
+        soldiers.removeAt(s.col, s.row);
+        this.map.release(s.col, s.row);
+        if (s.cost > 0) economy.refund(Math.floor(s.cost * 0.5));
+        audio.play('tower_down');
+        if (effects) effects.spawnDeath(s.x, s.y, s.weapon.color);
+        // 击杀回血：该塔被远程敌人弹道击杀时，击杀者（source）按 healOnKill 回血
+        const killer = s.killedBy;
+        if (killer && killer.alive && killer.healOnKill > 0) {
+          const healed = killer.heal(Math.round(killer.maxHp * killer.healOnKill));
+          if (healed > 0 && effects) effects.spawnHeal(killer.x, killer.y, healed);
+        }
+      }
+    }
+
+    // 5) 波间隔：已开过至少一波、当前无波进行中、未打满、游戏未结束时自动开下一波
     if (this.waveIndex > 0 && this.waveIndex < this.maxWaves
         && !this.isWaveInProgress() && !economy.isGameOver()) {
       this._interWaveTimer -= dt;

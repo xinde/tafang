@@ -11,6 +11,7 @@
     "growth.speedScaleCap": "速度增幅上限（相对基础速度的比例）",
     "growth.rewardBonusEveryWaves": "每 N 波金币奖励 +1，rewardBonus = floor((波数-1)/N)",
     "growth.armorBonusEveryWaves": "每 N 波护甲 +1，armorBonus = floor((波数-1)/N)",
+    "growth.rangedDamagePerWave": "远程伤害递增系数（法师/BOSS），damage = round(基础 * (1 + (波数-1)*本值))",
     "unlock": "各进阶类型解锁波数（到达该波起才可能出现），键为怪兽类型 key",
     "distribution": "确定性类型分配：按数组顺序逐个匹配，首个命中生效，未解锁的类型自动落空。every/offset 表示每 every 只中的第 offset 只（槽位 i % every === offset）",
     "boss.every": "每 N 波追加一只 BOSS（波数 % N === 0）",
@@ -28,12 +29,14 @@
     "speedScalePerWave": 0.05,
     "speedScaleCap": 0.6,
     "rewardBonusEveryWaves": 2,
-    "armorBonusEveryWaves": 4
+    "armorBonusEveryWaves": 4,
+    "rangedDamagePerWave": 0.12
   },
-  "unlock": { "fast": 2, "tank": 3, "swarm": 6, "armored": 8 },
+  "unlock": { "fast": 2, "tank": 3, "swarm": 6, "armored": 8, "mage": 4 },
   "distribution": [
     { "type": "armored", "every": 7, "offset": 6 },
     { "type": "swarm",   "every": 4, "offset": 3 },
+    { "type": "mage",    "every": 6, "offset": 5 },
     { "type": "tank",    "every": 5, "offset": 4 },
     { "type": "fast",    "every": 3, "offset": 2 }
   ],

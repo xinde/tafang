@@ -7,6 +7,7 @@ export const CONFIG = {
   START_GOLD: 100,    // 初始金币
   BASE_LIVES: 20,     // 基地生命
   SOLDIER_COST: 20,   // 放置一个士兵消耗的金币
+  SOLDIER_MAX_HP: 100, // 防御塔生命（远程敌人攻击塔的伤害池）
   // 全局强化：每级加成比例与递增花费
   UPGRADE: {
     DAMAGE:   { label: '攻击力',   baseCost: 40, growth: 1.5, maxLevel: 6, perLevel: 0.12 },

@@ -24,7 +24,7 @@ const renderer = new Renderer(ctx, grid);
 const map = new GameMap();
 const economy = new Economy();
 const soldiers = new SoldierManager();
-const waves = new WaveManager(map, waveConfig);
+const waves = new WaveManager(map, waveConfig, { soldiers }); // combat 上下文：远程敌人可攻击防御塔
 const projectiles = new ProjectileManager();
 const effects = new EffectManager();
 const upgrades = new UpgradeManager();
@@ -61,7 +61,7 @@ const SOUND_NAMES = [
   'fire_sword', 'fire_arrow', 'fire_cannon', 'fire_magic',
   'hit_arrow', 'hit_cannon', 'hit_magic',
   'place', 'upgrade', 'sell', 'wave_start', 'kill', 'leak', 'coin',
-  'victory', 'gameover', 'button',
+  'victory', 'gameover', 'button', 'tower_down',
 ];
 const audioManifest = {};
 for (const n of SOUND_NAMES) audioManifest[n] = `assets/audio/${n}.wav`;
@@ -91,6 +91,7 @@ assets.setManifest({
   monster_tank: 'assets/img/monster_tank.svg',
   monster_swarm: 'assets/img/monster_swarm.svg',
   monster_armored: 'assets/img/monster_armored.svg',
+  monster_mage: 'assets/img/monster_mage.svg',
   monster_boss: 'assets/img/monster_boss.svg',
   base: 'assets/img/base.svg',
 });
@@ -399,7 +400,8 @@ function update(dt) {
   effects.update(dt);
 
   // 波次：生成/移动/结算（漏怪扣血、击杀掉金币 + 死亡特效在 wave 内统一处理）
-  waves.update(dt, economy, effects);
+  // projectiles 供远程敌人（法师/BOSS）开火入队
+  waves.update(dt, economy, effects, projectiles);
 
   if (economy.isGameOver()) {
     gameOver = true;
@@ -432,6 +434,10 @@ function render() {
       angle: s.angle,
       image: assets.get(`turret_${s.weapon.type}`),
     });
+    // 防御塔血条（仅受损时显示，避免视觉杂乱）
+    if (s.hp < s.maxHp) {
+      renderer.drawHealthBar(s.x, s.y - CONFIG.CELL_SIZE * 0.42, CONFIG.CELL_SIZE * 0.6, s.hpRatio, s.weapon.color);
+    }
   }
 
   // 怪兽（按类型图片 + 血条；图片未就绪时回退纯色圆）

@@ -39,6 +39,7 @@ export class Projectile {
     this.radius = o.radius || 4;
     this.weaponType = o.weaponType || null;
     this.hitSfx = o.hitSfx || null;
+    this.source = o.source || null; // 开火者（远程敌人弹道：击杀防御塔后据此回血）
     this.alive = true;
     // 记录目标点（目标死亡后仍飞向最后位置，保证炮弹不悬空）
     this._tx = o.target ? o.target.x : o.x;
@@ -69,7 +70,10 @@ export class Projectile {
 
   _applyHit(monster, damage, effects) {
     if (!monster || !monster.alive) return 0;
+    const wasAlive = monster.alive;
     const dmg = monster.takeDamage(damage, this.pierce);
+    // 命中致死且存在击杀者（远程敌人弹道）：记录到目标上，供 wave 层做"击杀回血"结算
+    if (wasAlive && !monster.alive && this.source) monster.killedBy = this.source;
     if (this.slow) monster.applySlow(this.slow.factor, this.slow.duration);
     if (effects && dmg > 0) effects.spawnDamage(monster.x, monster.y, dmg, this.color);
     return dmg;
@@ -99,6 +103,12 @@ export class Projectile {
     }
   }
 
+  /**
+   * 命中结算。monster 参数名保留为通用"目标列表"：本类既服务我方武器（对 Monster 命中），
+   * 也服务远程敌人弹道（对 Soldier 防御塔 / 基地标记命中，monsters 传入空数组即可）。
+   * @param {Monster[]} monsters 我方武器索敌列表；敌人弹道传空数组
+   * @param {EffectManager|null} effects
+   */
   _hit(monsters, effects) {
     this.alive = false;
     // 命中/爆炸音效按弹道（武器类型）区分

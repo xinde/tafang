@@ -26,6 +26,11 @@ function aimToward(cur, desired, maxStep) {
 /**
  * Soldier（士兵/防御塔）：装备一种武器，自动索敌并开火。
  * 伤害结算通过 monster.takeDamage，击杀由 wave 层判定掉金币（接口约定）。
+ *
+ * 自 1.1 起防御塔有血量：远程敌人（法师/BOSS）可攻击并摧毁塔。
+ * - hp/maxHp：当前/最大生命；被摧毁（takeDamage 至 0）后 alive=false，
+ *   由 wave 层清理（释放格子 + 返还 50% 成本 + 爆裂特效）。
+ * - 攻击方只调用 takeDamage(dmg)，防御塔不主动回血，保证机械可测。
  */
 export class Soldier {
   /**
@@ -37,6 +42,9 @@ export class Soldier {
     this.col = col;
     this.row = row;
     this.setWeapon(weaponType);
+    this.maxHp = CONFIG.SOLDIER_MAX_HP;
+    this.hp = this.maxHp;
+    this.alive = true;       // 远程敌人索敌/攻击先检查 alive
     this.targetMode = TargetMode.FIRST;
     this._cooldown = 0;
     this.angle = 0;          // 炮塔当前朝向（弧度），平滑跟随发射方向
@@ -45,6 +53,23 @@ export class Soldier {
     const cs = CONFIG.CELL_SIZE;
     this.x = col * cs + cs / 2;
     this.y = row * cs + cs / 2;
+  }
+
+  /** 防御塔受击。返回实际扣血量（供飘字）。死亡后 alive=false，由 wave 层清理。 */
+  takeDamage(amount) {
+    if (!this.alive) return 0;
+    const dmg = Math.max(1, Math.round(amount || 0));
+    this.hp -= dmg;
+    if (this.hp <= 0) {
+      this.hp = 0;
+      this.alive = false;
+    }
+    return dmg;
+  }
+
+  /** 剩余血量比例 0..1，用于血条渲染 */
+  get hpRatio() {
+    return this.maxHp > 0 ? this.hp / this.maxHp : 0;
   }
 
   /** 切换武器（保留当前冷却），返回新武器定义 */
@@ -173,7 +198,11 @@ export class SoldierManager {
   }
 
   update(dt, ctx) {
-    for (const s of this.soldiers) s.update(dt, ctx);
+    // 已摧毁的塔跳过战斗逻辑（alive=false 由 wave 清理）
+    for (const s of this.soldiers) {
+      if (!s.alive) continue;
+      s.update(dt, ctx);
+    }
   }
 
   getAll() {
