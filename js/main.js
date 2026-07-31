@@ -365,6 +365,9 @@ const quizGate = new QuizGate({
 function renderQuizQuestion(question, key) {
   const d = UPGRADE_DEFS[key];
   quizQuestionEl.textContent = question.q;
+  // 重置底部状态与选项高亮：避免残留上一次答题的反馈/对错 class
+  quizFeedbackEl.textContent = '';
+  quizFeedbackEl.className = 'quiz-feedback';
   quizOptionsEl.innerHTML = '';
   question.options.forEach((text, i) => {
     const btn = document.createElement('button');
