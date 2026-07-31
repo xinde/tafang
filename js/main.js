@@ -12,7 +12,9 @@ import { ProjectileManager } from './game/projectile.js';
 import { EffectManager } from './game/effects.js';
 import { WEAPONS, WeaponType } from './game/weapon.js';
 import { UpgradeManager, UPGRADE_KEYS, UPGRADE_DEFS } from './game/upgrade.js';
+import { QuizBank, QuizGate } from './game/quiz.js';
 import waveConfig from '../config/waves.json' with { type: 'json' };
+import quizConfig from '../config/quiz.json' with { type: 'json' };
 
 // ---------- 初始化画布 ----------
 const canvas = document.getElementById('game-canvas');
@@ -111,6 +113,7 @@ const weaponOrder = [
 // ---------- 游戏结束状态 ----------
 let gameOver = false;
 let victory = false;
+let paused = false; // 答题门禁暂停：update 跳过逻辑，render 照常（画面定格）
 
 // ---------- HUD / 武器面板 ----------
 const hudGold = document.getElementById('hud-gold');
@@ -305,19 +308,112 @@ const weaponKeys = {
   7: WeaponType.STORM,
 };
 window.addEventListener('keydown', (e) => {
+  // 答题门禁打开时：数字 1-4 提交选项，禁用武器切换
+  if (paused) {
+    if (quizGate.isActive) {
+      const i = Number(e.key) - 1;
+      if (i >= 0 && i < OPTION_LABELS.length) quizGate.submit(i);
+    }
+    return;
+  }
   if (weaponKeys[e.key]) selectWeapon(weaponKeys[e.key]);
 });
 
-// ---------- 升级购买 ----------
-for (const btn of document.querySelectorAll('.up-btn')) {
-  btn.addEventListener('click', () => {
-    if (gameOver) return;
-    const key = btn.dataset.up;
-    if (upgrades.buy(key, economy)) {
+// ---------- 升级购买（答题门禁） ----------
+// 点击全局强化按钮不直接购买，而是弹限时答题：答对才升级并扣金币，答错/超时不升级不扣钱。
+// 门禁纯逻辑在 QuizGate（js/game/quiz.js），此处仅做 DOM 接线与副作用（暂停/音效/recompute）。
+const quizBank = new QuizBank(quizConfig);
+const quizOverlay = document.getElementById('quiz-overlay');
+const quizTimerEl = document.getElementById('quiz-timer');
+const quizQuestionEl = document.getElementById('quiz-question');
+const quizOptionsEl = document.getElementById('quiz-options');
+const quizFeedbackEl = document.getElementById('quiz-feedback');
+const OPTION_LABELS = ['A', 'B', 'C', 'D', 'E'];
+
+function closeQuiz() {
+  quizOverlay.classList.add('hidden');
+  paused = false;
+  // 暂停期间固定 dt 累加器已累积帧时间，清空防止恢复后一次性回补导致怪兽瞬移
+  loop.resetAccumulator();
+}
+
+const quizGate = new QuizGate({
+  bank: quizBank,
+  upgrades,
+  economy,
+  resolveDelay: 0.9,
+  onOpen: () => {
+    paused = true;
+    quizOverlay.classList.remove('hidden');
+  },
+  onResolve: ({ correct, applied }) => {
+    if (applied) {
       audio.play('upgrade');
       // 立即作用于所有已放置士兵
       const mul = upgrades.multipliers;
       for (const s of soldiers.getAll()) s.recompute(mul);
+    } else if (correct) {
+      audio.play('button'); // 答对但购买失败（金币被外部改变），保守提示
+    } else {
+      audio.play('button'); // 答错 / 超时
+    }
+    renderQuizFeedback(correct, applied);
+  },
+  onClose: closeQuiz,
+});
+
+function renderQuizQuestion(question, key) {
+  const d = UPGRADE_DEFS[key];
+  quizQuestionEl.textContent = question.q;
+  quizOptionsEl.innerHTML = '';
+  question.options.forEach((text, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'quiz-opt';
+    btn.dataset.opt = String(i);
+    btn.textContent = `${OPTION_LABELS[i]}. ${text}`;
+    btn.addEventListener('click', () => quizGate.submit(i));
+    quizOptionsEl.appendChild(btn);
+  });
+  // 展示升级目标（如：攻击力 Lv2 → Lv3 · 花费 90 金）
+  const lv = upgrades.getLevel(key);
+  const cost = upgrades.getCost(key);
+  const target = document.getElementById('quiz-upgrade-label');
+  if (target) target.textContent = `${d.label} Lv${lv} → Lv${lv + 1} · 答对扣除 ${cost} 金`;
+}
+
+function renderQuizFeedback(correct, applied) {
+  const answerIndex = quizGate.lastResult ? quizGate.lastResult.answerIndex : null;
+  const options = Array.from(quizOptionsEl.querySelectorAll('.quiz-opt'));
+  options.forEach((btn, i) => {
+    const isAnswer = i === quizGate.question.answer;
+    btn.classList.toggle('is-correct', isAnswer);
+    btn.classList.toggle('is-wrong', applied ? false : i === answerIndex && !isAnswer);
+    btn.disabled = true;
+  });
+  if (applied) {
+    quizFeedbackEl.textContent = '答对！升级成功 ✓';
+    quizFeedbackEl.className = 'quiz-feedback is-correct';
+  } else {
+    quizFeedbackEl.textContent = correct ? '答对但金币不足，升级失败' : '答错或超时，未升级';
+    quizFeedbackEl.className = 'quiz-feedback is-wrong';
+  }
+}
+
+function updateQuizTimer(remaining) {
+  const sec = Math.ceil(remaining);
+  quizTimerEl.textContent = `${sec}s`;
+  quizTimerEl.classList.toggle('is-low', sec <= 3);
+}
+
+// 替换原直接购买逻辑：点击升级按钮 → 开启答题门禁
+for (const btn of document.querySelectorAll('.up-btn')) {
+  btn.addEventListener('click', () => {
+    if (gameOver || paused) return;
+    const key = btn.dataset.up;
+    if (quizGate.open(key)) {
+      renderQuizQuestion(quizGate.question, key);
+      updateQuizTimer(quizGate.remaining);
     }
   });
 }
@@ -393,6 +489,12 @@ function showOverlay(title, sub, isWin) {
 // ---------- 主循环 ----------
 function update(dt) {
   if (gameOver) return;
+  if (paused) {
+    // 答题门禁：只推进答题状态机（倒计时/反馈时长），游戏逻辑全部冻结
+    quizGate.tick(dt);
+    updateQuizTimer(quizGate.remaining);
+    return;
+  }
   const monsters = waves.getActive();
   const combatCtx = { monsters, projectiles, effects };
   soldiers.update(dt, combatCtx);
@@ -459,8 +561,8 @@ function render() {
   // 战斗特效（飘字/斩击/爆裂）
   effects.draw(renderer);
 
-  // 悬停高亮 + 预览攻击范围
-  if (input.hoverCell && !gameOver) {
+  // 悬停高亮 + 预览攻击范围（答题暂停时不显示，避免遮罩下残留预览）
+  if (input.hoverCell && !gameOver && !paused) {
     const { col, row } = input.hoverCell;
     const valid = map.canPlace(col, row) && !soldiers.getAt(col, row);
     renderer.drawHover(col, row, valid);

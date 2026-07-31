@@ -34,6 +34,14 @@ export class GameLoop {
     this.running = false;
   }
 
+  /**
+   * 清空固定时间步长累加器。游戏暂停恢复时调用，防止暂停期间累积的
+   * 帧时间在恢复后一次性回补（while 循环连跑数百帧 update 导致怪兽瞬移）。
+   */
+  resetAccumulator() {
+    this.accumulator = 0;
+  }
+
   _tick(now) {
     if (!this.running) return;
     let frameTime = (now - this.lastTime) / 1000;
