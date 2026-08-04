@@ -94,6 +94,7 @@ assets.setManifest({
   monster_swarm: 'assets/img/monster_swarm.svg',
   monster_armored: 'assets/img/monster_armored.svg',
   monster_mage: 'assets/img/monster_mage.svg',
+  monster_archer: 'assets/img/monster_archer.svg',
   monster_boss: 'assets/img/monster_boss.svg',
   base: 'assets/img/base.svg',
 });

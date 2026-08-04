@@ -107,8 +107,11 @@ test('波次递增：数量/血量随波增长，高波引入 FAST/TANK', () => 
   const w1 = waves._buildWave(1);
   const w5 = waves._buildWave(5);
   assert.ok(w5.length > w1.length, `第5波数量(${w5.length})应大于第1波(${w1.length})`);
-  // NORMAL 血量缩放：wave1 hpScale=1，wave5 hpScale=1+4*0.25=2
-  assert.ok(w5[0].hp > w1[0].hp, `第5波首怪血量(${w5[0].hp})应大于第1波(${w1[0].hp})`);
+  // NORMAL 血量缩放：wave1 hpScale=1，wave5 hpScale=1+4*0.30=2.2
+  // 洗牌后首元素类型不定，取 NORMAL 类型比较
+  const w1Normal = w1.find((c) => c.radius === MonsterType.NORMAL.radius);
+  const w5Normal = w5.find((c) => c.radius === MonsterType.NORMAL.radius);
+  assert.ok(w5Normal && w1Normal && w5Normal.hp > w1Normal.hp, `第5波NORMAL血量(${w5Normal?.hp})应大于第1波(${w1Normal?.hp})`);
   const hasTank5 = w5.some((c) => c.radius === MonsterType.TANK.radius);
   const hasFast5 = w5.some((c) => c.radius === MonsterType.FAST.radius);
   assert.ok(hasTank5, '第5波应含 TANK');

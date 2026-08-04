@@ -8,6 +8,7 @@ const ADVANCED_BY_KEY = {
   swarm: MonsterType.SWARM,
   armored: MonsterType.ARMORED,
   mage: MonsterType.MAGE,
+  archer: MonsterType.ARCHER,
 };
 
 /**
@@ -88,6 +89,7 @@ export class WaveManager {
       swarm: index >= cfg.unlock.swarm,
       armored: index >= cfg.unlock.armored,
       mage: index >= cfg.unlock.mage,
+      archer: index >= cfg.unlock.archer,
     };
     const isBossWave = index > 0 && index % cfg.boss.every === 0; // 5/10/15/20
 
@@ -111,6 +113,7 @@ export class WaveManager {
         if (unlocked.swarm) upgrades.push(MonsterType.SWARM);
         if (unlocked.armored) upgrades.push(MonsterType.ARMORED);
         if (unlocked.mage) upgrades.push(MonsterType.MAGE);
+        if (unlocked.archer) upgrades.push(MonsterType.ARCHER);
         if (upgrades.length) t = upgrades[Math.floor(Math.random() * upgrades.length)];
       }
       queue.push(this._makeMonster(t, hpScale, speedScale, rewardBonus, armorBonus, dmgScale));
@@ -126,6 +129,7 @@ export class WaveManager {
         if (unlocked.swarm) pool.push(MonsterType.SWARM);
         if (unlocked.armored) pool.push(MonsterType.ARMORED);
         if (unlocked.mage) pool.push(MonsterType.MAGE);
+        if (unlocked.archer) pool.push(MonsterType.ARCHER);
         const t = pool[Math.floor(Math.random() * pool.length)];
         queue.push(this._makeMonster(t, hpScale, speedScale, rewardBonus, armorBonus, dmgScale));
       }

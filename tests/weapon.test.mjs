@@ -51,7 +51,7 @@ test('狙击命中装甲怪时按穿甲结算，高于普通无穿甲命中', ()
   arrowShot._hit([armoredB]);
 
   assert.equal(armoredA.hp, 18, '狙击穿甲后应吃满 42 伤害');
-  assert.equal(armoredB.hp, 22, '无穿甲时应被护甲减到 38 伤害');
+  assert.equal(armoredB.hp, 23, '无穿甲时应被护甲减到 37 伤害');
 });
 
 test('寒冰命中后会减速，下一秒移动距离减半', () => {

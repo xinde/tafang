@@ -8,16 +8,16 @@ import { Projectile } from './projectile.js';
  *   但对单发高伤武器（炮击）仍脆弱。
  */
 export const MonsterType = {
-  NORMAL:  { key: 'normal',  hp: 20,  speed: 60,  reward: 5,  radius: 0.30, color: '#e05555', armor: 0 },
-  FAST:    { key: 'fast',    hp: 12,  speed: 115, reward: 6,  radius: 0.24, color: '#e0a555', armor: 0 },
-  TANK:    { key: 'tank',    hp: 65,  speed: 34,  reward: 12, radius: 0.40, color: '#9b59e0', armor: 0 },
-  SWARM:   { key: 'swarm',   hp: 8,   speed: 95,  reward: 2,  radius: 0.20, color: '#5ad07a', armor: 0 },
-  ARMORED: { key: 'armored', hp: 40,  speed: 50,  reward: 10, radius: 0.36, color: '#5a8ad0', armor: 4 },
-  MAGE:    { key: 'mage',    hp: 26,  speed: 40,  reward: 14, radius: 0.30, color: '#b46ae8', armor: 0, ranged: {
-    range: 220,          // 索敌/攻击射程（像素）
-    damage: 8,           // 单发弹道伤害（对塔 / 对基地）
-    fireRate: 0.9,       // 每秒攻击次数
-    projectileSpeed: 300,
+  NORMAL:  { key: 'normal',  hp: 30,  speed: 78,  reward: 5,  radius: 0.30, color: '#e05555', armor: 0 },
+  FAST:    { key: 'fast',    hp: 18,  speed: 145, reward: 6,  radius: 0.24, color: '#e0a555', armor: 0 },
+  TANK:    { key: 'tank',    hp: 95,  speed: 44,  reward: 12, radius: 0.40, color: '#9b59e0', armor: 0 },
+  SWARM:   { key: 'swarm',   hp: 12,  speed: 120, reward: 2,  radius: 0.20, color: '#5ad07a', armor: 0 },
+  ARMORED: { key: 'armored', hp: 60,  speed: 64,  reward: 10, radius: 0.36, color: '#5a8ad0', armor: 5 },
+  MAGE:    { key: 'mage',    hp: 38,  speed: 52,  reward: 14, radius: 0.30, color: '#b46ae8', armor: 0, ranged: {
+    range: 240,          // 索敌/攻击射程（像素）
+    damage: 10,          // 单发弹道伤害（对塔 / 对基地）
+    fireRate: 1.0,       // 每秒攻击次数
+    projectileSpeed: 320,
     projColor: '#c98af5',
     projRadius: 5,
     moveFactor: 0.35,    // 攻击期间移动速度比例（边打边走，不原地站桩）
@@ -25,11 +25,23 @@ export const MonsterType = {
     fireSfx: 'fire_magic',
     hitSfx: 'hit_magic',
   } },
-  BOSS:    { key: 'boss',    hp: 280, speed: 30,  reward: 50, radius: 0.52, color: '#b02030', armor: 6, ranged: {
-    range: 300,          // 攻击射程（像素）
-    damage: 16,          // 单发弹道伤害（对塔 / 对基地）
-    fireRate: 0.55,      // 每秒攻击次数
-    projectileSpeed: 240,
+  ARCHER:  { key: 'archer',  hp: 32,  speed: 68,  reward: 12, radius: 0.28, color: '#e8b84a', armor: 1, ranged: {
+    range: 260,          // 索敌/攻击射程（像素）
+    damage: 7,           // 单发弹道伤害（对塔 / 对基地）
+    fireRate: 1.3,       // 每秒攻击次数（弓箭手射速较快）
+    projectileSpeed: 360,
+    projColor: '#f0d060',
+    projRadius: 4,
+    moveFactor: 0.45,    // 攻击期间移动速度比例（边打边走，比法师稍快）
+    healOnKill: 0,       // 弓箭手无生命窃取
+    fireSfx: 'fire_arrow',
+    hitSfx: 'hit_arrow',
+  } },
+  BOSS:    { key: 'boss',    hp: 420, speed: 38,  reward: 50, radius: 0.52, color: '#b02030', armor: 8, ranged: {
+    range: 320,          // 攻击射程（像素）
+    damage: 20,          // 单发弹道伤害（对塔 / 对基地）
+    fireRate: 0.6,       // 每秒攻击次数
+    projectileSpeed: 260,
     projColor: '#ff8030',
     projRadius: 7,
     moveFactor: 0.3,     // 攻击期间移动速度比例（BOSS 更慢）
