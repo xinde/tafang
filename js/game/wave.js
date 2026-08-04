@@ -205,8 +205,9 @@ export class WaveManager {
    * @param {Economy} economy
    * @param {EffectManager} [effects] 可选，怪兽死亡/防御塔损毁时播放爆裂特效
    * @param {ProjectileManager} [projectiles] 弹道管理器（远程敌人开火入队）
+   * @param {number} [monsterSpeedMul=1] 天气等外部因素对怪物速度的乘数（1=无影响）
    */
-  update(dt, economy, effects, projectiles) {
+  update(dt, economy, effects, projectiles, monsterSpeedMul = 1) {
     // 1) 逐只生成
     if (this.spawning) {
       this._spawnTimer -= dt;
@@ -235,7 +236,7 @@ export class WaveManager {
     };
     for (const m of this.active) {
       const speedMul = m.updateRanged(dt, monsterCombat); // 攻击中返回 moveFactor（缓慢移动）
-      m.update(dt, { speedMul });                          // 边打边走，不原地站桩
+      m.update(dt, { speedMul: speedMul * monsterSpeedMul });   // 边打边走，天气影响速度
     }
 
     // 3) 结算：漏怪扣基地血 / 击杀掉金币 + 死亡特效

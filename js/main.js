@@ -13,8 +13,10 @@ import { EffectManager } from './game/effects.js';
 import { WEAPONS, WeaponType } from './game/weapon.js';
 import { UpgradeManager, UPGRADE_KEYS, UPGRADE_DEFS } from './game/upgrade.js';
 import { QuizBank, QuizGate } from './game/quiz.js';
+import { WeatherManager, WeatherFX } from './game/weather.js';
 import waveConfig from '../config/waves.json' with { type: 'json' };
 import quizConfig from '../config/quiz.json' with { type: 'json' };
+import weatherConfig from '../config/weather.json' with { type: 'json' };
 
 // ---------- 初始化画布 ----------
 const canvas = document.getElementById('game-canvas');
@@ -31,6 +33,16 @@ const projectiles = new ProjectileManager();
 const effects = new EffectManager();
 const upgrades = new UpgradeManager();
 const input = new Input(canvas, grid);
+
+// ---------- 天气系统 ----------
+const weather = new WeatherManager(weatherConfig);
+const weatherFX = new WeatherFX();
+weather.setOnWeatherChange((w) => {
+  // 天气切换时刷新 HUD + 重新计算士兵属性（乘数变化）
+  refreshWeatherHud();
+  applyWeatherToSoldiers();
+});
+const hudWeather = document.getElementById('hud-weather');
 
 // ---------- 视口自适应：画布铺满 #game-wrap ----------
 // 逻辑空间固定 960×576，按容器尺寸等比缩放并居中，DPR 适配高清屏；
@@ -350,8 +362,8 @@ const quizGate = new QuizGate({
   onResolve: ({ correct, applied }) => {
     if (applied) {
       audio.play('upgrade');
-      // 立即作用于所有已放置士兵
-      const mul = upgrades.multipliers;
+      // 立即作用于所有已部署士兵（升级乘数 × 天气乘数）
+      const mul = combinedMultipliers();
       for (const s of soldiers.getAll()) s.recompute(mul);
     } else if (correct) {
       audio.play('button'); // 答对但购买失败（金币被外部改变），保守提示
@@ -455,7 +467,7 @@ input.onCellClick(({ col, row }) => {
   if (economy.spend(w.cost)) {
     map.occupy(col, row);
     const s = new Soldier(col, row, currentWeapon);
-    s.recompute(upgrades.multipliers); // 应用全局强化
+    s.recompute(combinedMultipliers()); // 应用全局强化 × 天气乘数
     soldiers.add(s);
     audio.play('place');
   }
@@ -479,6 +491,42 @@ function restart() {
 }
 document.getElementById('btn-restart').addEventListener('click', restart);
 
+// ---------- 天气 HUD 与乘数应用 ----------
+/** 计算组合乘数 = 升级乘数 × 天气乘数 */
+function combinedMultipliers() {
+  const up = upgrades.multipliers;
+  const wm = weather.modifiers;
+  return {
+    damageMul: up.damageMul * wm.damageMul,
+    fireRateMul: up.fireRateMul * wm.fireRateMul,
+    rangeMul: up.rangeMul * wm.rangeMul,
+  };
+}
+
+/** 天气切换时重新计算所有士兵属性 */
+function applyWeatherToSoldiers() {
+  const mul = combinedMultipliers();
+  for (const s of soldiers.getAll()) s.recompute(mul);
+}
+
+/** 刷新天气 HUD：显示天气名称/图标/倒计时 */
+function refreshWeatherHud() {
+  if (!hudWeather) return;
+  const w = weather.currentWeather;
+  if (w) {
+    const sec = Math.ceil(weather.remaining);
+    hudWeather.querySelector('.weather-icon').textContent = w.icon;
+    hudWeather.querySelector('.weather-name').textContent = w.name;
+    hudWeather.querySelector('.weather-timer').textContent = `${sec}s`;
+    hudWeather.classList.remove('hidden');
+    hudWeather.classList.remove('weather-wind', 'weather-rain', 'weather-snow');
+    hudWeather.classList.add(`weather-${w.key}`);
+  } else {
+    hudWeather.classList.add('hidden');
+    hudWeather.classList.remove('weather-wind', 'weather-rain', 'weather-snow');
+  }
+}
+
 // ---------- 胜负覆盖层 ----------
 const overlay = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
@@ -499,6 +547,11 @@ function update(dt) {
     updateQuizTimer(quizGate.remaining);
     return;
   }
+  // 天气系统：推进倒计时，切换时已由回调处理 HUD/士兵刷新
+  const wasActive = weather.isActive;
+  weather.tick(dt);
+  // active 阶段每帧刷新倒计时显示
+  if (weather.isActive) refreshWeatherHud();
   const monsters = waves.getActive();
   const combatCtx = { monsters, projectiles, effects };
   soldiers.update(dt, combatCtx);
@@ -506,8 +559,8 @@ function update(dt) {
   effects.update(dt);
 
   // 波次：生成/移动/结算（漏怪扣血、击杀掉金币 + 死亡特效在 wave 内统一处理）
-  // projectiles 供远程敌人（法师/BOSS）开火入队
-  waves.update(dt, economy, effects, projectiles);
+  // projectiles 供远程敌人（法师/BOSS）开火入队；天气影响怪物移动速度
+  waves.update(dt, economy, effects, projectiles, weather.modifiers.monsterSpeedMul);
 
   if (economy.isGameOver()) {
     gameOver = true;
@@ -564,6 +617,9 @@ function render() {
 
   // 战斗特效（飘字/斩击/爆裂）
   effects.draw(renderer);
+
+  // 天气视觉特效（风线/雨滴/雪花，画在游戏内容之上、覆盖层之下）
+  weatherFX.draw(ctx, CANVAS_WIDTH, CANVAS_HEIGHT, CONFIG.FIXED_DT, weather.currentWeather);
 
   // 悬停高亮 + 预览攻击范围（答题暂停时不显示，避免遮罩下残留预览）
   if (input.hoverCell && !gameOver && !paused) {

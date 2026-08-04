@@ -1,0 +1,58 @@
+{
+  "_doc": {
+    "说明": "随机天气系统配置。天气周期性变化，影响防御塔的攻击力/攻速/范围。每种天气控制不同变量，全部可配置。",
+    "minClearTime": "晴朗期最短持续秒数（天气结束后进入晴朗期）",
+    "maxClearTime": "晴朗期最长持续秒数",
+    "firstWeatherDelay": "游戏开始后多少秒首次触发天气",
+    "weathers": "天气类型列表，每种天气定义：key/name/icon/color/持续秒数/影响变量",
+    "weathers[].effects": "天气对防御塔的影响乘数（1=无影响，<1=削弱，>1=增强）",
+    "weathers[].effects.damageMul": "攻击力乘数（大风降低精度=攻击力降低）",
+    "weathers[].effects.fireRateMul": "攻速乘数（雨/雪使武器迟钝）",
+    "weathers[].effects.rangeMul": "攻击范围乘数（大雪降低能见度）",
+    "weathers[].effects.monsterSpeedMul": "怪物移动速度乘数（天气也影响怪物，可选）"
+  },
+  "minClearTime": 8,
+  "maxClearTime": 16,
+  "firstWeatherDelay": 15,
+  "weathers": [
+    {
+      "key": "wind",
+      "name": "大风",
+      "icon": "🌪️",
+      "color": "#c0b080",
+      "duration": 20,
+      "effects": {
+        "damageMul": 0.70,
+        "fireRateMul": 1.0,
+        "rangeMul": 1.0,
+        "monsterSpeedMul": 1.10
+      }
+    },
+    {
+      "key": "rain",
+      "name": "暴雨",
+      "icon": "🌧️",
+      "color": "#4a8acc",
+      "duration": 18,
+      "effects": {
+        "damageMul": 1.0,
+        "fireRateMul": 0.65,
+        "rangeMul": 0.90,
+        "monsterSpeedMul": 0.85
+      }
+    },
+    {
+      "key": "snow",
+      "name": "大雪",
+      "icon": "❄️",
+      "color": "#aaccee",
+      "duration": 16,
+      "effects": {
+        "damageMul": 0.85,
+        "fireRateMul": 0.75,
+        "rangeMul": 0.75,
+        "monsterSpeedMul": 0.70
+      }
+    }
+  ]
+}
