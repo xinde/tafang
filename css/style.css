@@ -111,6 +111,10 @@ html, body {
 /* 天气 HUD：按天气类型配色 + 脉冲动画提示 */
 .hud-stat.is-weather { border-color: rgba(200,200,200,0.4); box-shadow: 0 2px 10px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06); animation: weather-pulse 2s ease-in-out infinite; }
 .hud-stat.is-weather.hidden { display: none; }
+
+/* 地图 HUD */
+.hud-stat.is-map { border-color: rgba(138,122,90,0.55); box-shadow: 0 2px 10px rgba(0,0,0,0.45), 0 0 12px rgba(138,122,90,0.10), inset 0 1px 0 rgba(255,255,255,0.06); }
+.hud-stat.is-map .hud-val { font-size: 13px; }
 .hud-stat.is-weather.weather-wind  { border-color: rgba(192,176,128,0.7); box-shadow: 0 2px 10px rgba(0,0,0,0.45), 0 0 14px rgba(192,176,128,0.20), inset 0 1px 0 rgba(255,255,255,0.06); }
 .hud-stat.is-weather.weather-rain  { border-color: rgba(74,138,204,0.7);  box-shadow: 0 2px 10px rgba(0,0,0,0.45), 0 0 14px rgba(74,138,204,0.22), inset 0 1px 0 rgba(255,255,255,0.06); }
 .hud-stat.is-weather.weather-snow  { border-color: rgba(170,204,238,0.7); box-shadow: 0 2px 10px rgba(0,0,0,0.45), 0 0 14px rgba(170,204,238,0.22), inset 0 1px 0 rgba(255,255,255,0.06); }

@@ -1,0 +1,73 @@
+{
+  "_doc": {
+    "说明": "地图配置文件。每张地图定义一条从屏幕外到基地的折线路径（网格坐标）。开局随机选一张。路径仅含水平/垂直段，waypoints[0] 为出生点（col=-1 在屏幕外），最后一个点为基地所在格。",
+    "maps[].name": "地图名称（展示用）",
+    "maps[].waypoints": "路径拐点数组，{col, row} 网格坐标",
+    "maps[].baseCell": "基地所在格 {col, row}，必须等于最后一个 waypoint",
+    "maps[].desc": "地图描述"
+  },
+  "maps": [
+    {
+      "name": "蛇形通道",
+      "desc": "经典 S 型蜿蜒路径，路径长，布塔空间充裕",
+      "waypoints": [
+        { "col": -1, "row": 2 },
+        { "col": 4, "row": 2 },
+        { "col": 4, "row": 8 },
+        { "col": 10, "row": 8 },
+        { "col": 10, "row": 3 },
+        { "col": 15, "row": 3 },
+        { "col": 15, "row": 9 },
+        { "col": 19, "row": 9 }
+      ],
+      "baseCell": { "col": 19, "row": 9 }
+    },
+    {
+      "name": "回旋弯路",
+      "desc": "大回环路径，拐弯多，适合范围塔发挥",
+      "waypoints": [
+        { "col": -1, "row": 5 },
+        { "col": 3, "row": 5 },
+        { "col": 3, "row": 1 },
+        { "col": 14, "row": 1 },
+        { "col": 14, "row": 6 },
+        { "col": 6, "row": 6 },
+        { "col": 6, "row": 10 },
+        { "col": 17, "row": 10 },
+        { "col": 17, "row": 4 },
+        { "col": 19, "row": 4 }
+      ],
+      "baseCell": { "col": 19, "row": 4 }
+    },
+    {
+      "name": "双折捷径",
+      "desc": "短路径双折返，节奏快，布塔空间紧凑",
+      "waypoints": [
+        { "col": -1, "row": 1 },
+        { "col": 16, "row": 1 },
+        { "col": 16, "row": 5 },
+        { "col": 3, "row": 5 },
+        { "col": 3, "row": 9 },
+        { "col": 19, "row": 9 }
+      ],
+      "baseCell": { "col": 19, "row": 9 }
+    },
+    {
+      "name": "中央螺旋",
+      "desc": "向中央收束再展开的螺旋路径，战略纵深大",
+      "waypoints": [
+        { "col": -1, "row": 6 },
+        { "col": 2, "row": 6 },
+        { "col": 2, "row": 2 },
+        { "col": 17, "row": 2 },
+        { "col": 17, "row": 9 },
+        { "col": 5, "row": 9 },
+        { "col": 5, "row": 5 },
+        { "col": 14, "row": 5 },
+        { "col": 14, "row": 7 },
+        { "col": 19, "row": 7 }
+      ],
+      "baseCell": { "col": 19, "row": 7 }
+    }
+  ]
+}

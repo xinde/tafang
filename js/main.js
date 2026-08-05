@@ -17,6 +17,7 @@ import { WeatherManager, WeatherFX } from './game/weather.js';
 import waveConfig from '../config/waves.json' with { type: 'json' };
 import quizConfig from '../config/quiz.json' with { type: 'json' };
 import weatherConfig from '../config/weather.json' with { type: 'json' };
+import mapsConfig from '../config/maps.json' with { type: 'json' };
 
 // ---------- 初始化画布 ----------
 const canvas = document.getElementById('game-canvas');
@@ -25,7 +26,13 @@ const ctx = canvas.getContext('2d');
 // ---------- 模块装配 ----------
 const grid = { cellSize: CONFIG.CELL_SIZE, cols: CONFIG.COLS, rows: CONFIG.ROWS };
 const renderer = new Renderer(ctx, grid);
-const map = new GameMap();
+
+// ---------- 随机选图 ----------
+const _mapPool = mapsConfig.maps || [];
+const _mapConfig = _mapPool.length > 0
+  ? _mapPool[Math.floor(Math.random() * _mapPool.length)]
+  : undefined;
+const map = new GameMap(_mapConfig);
 const economy = new Economy();
 const soldiers = new SoldierManager();
 const waves = new WaveManager(map, waveConfig, { soldiers }); // combat 上下文：远程敌人可攻击防御塔
@@ -132,6 +139,7 @@ let paused = false; // 答题门禁暂停：update 跳过逻辑，render 照常�
 const hudGold = document.getElementById('hud-gold');
 const hudLives = document.getElementById('hud-lives');
 const hudWave = document.getElementById('hud-wave');
+const hudMapName = document.getElementById('hud-map-name');
 const btnNextWave = document.getElementById('btn-next-wave');
 const btnMute = document.getElementById('btn-mute');
 const weaponGrid = document.getElementById('weapon-grid');
@@ -299,6 +307,8 @@ upgrades.onChange(() => {
 refreshHud(economy.getState());
 refreshUpgradePanel();
 refreshWeaponHud();
+// 显示当前地图名称
+if (hudMapName) hudMapName.textContent = map.mapName || '随机地图';
 
 // ---------- 武器选择 ----------
 function isWeaponUnlocked(type) {

@@ -13,26 +13,43 @@ export const CellType = {
  * Map：网格地图 + 怪兽行进路径。
  * 负责路径点定义、单元格占用状态、可放置判定、路径长度换算。
  * monster/wave 模块通过 waypoints 与 getPathPosition 驱动移动。
+ *
+ * 支持外部注入地图配置（config/maps.json 中的一张地图），实现开局随机选图。
+ * 不传参数时使用默认地图（蛇形通道），保持向后兼容。
  */
 export class GameMap {
-  constructor() {
+  /**
+   * @param {object} [mapConfig] 地图配置（来自 config/maps.json 的一张地图）
+   * @param {Array<{col:number,row:number}>} [mapConfig.waypoints] 路径拐点
+   * @param {{col:number,row:number}} [mapConfig.baseCell] 基地所在格
+   * @param {string} [mapConfig.name] 地图名称
+   */
+  constructor(mapConfig) {
     this.cols = CONFIG.COLS;
     this.rows = CONFIG.ROWS;
     this.cellSize = CONFIG.CELL_SIZE;
 
-    // 从左侧到右侧基地的一条折线路径（网格坐标 waypoint）
-    this.waypoints = [
-      { col: -1, row: 2 },   // 屏幕外出生点
-      { col: 4, row: 2 },
-      { col: 4, row: 8 },
-      { col: 10, row: 8 },
-      { col: 10, row: 3 },
-      { col: 15, row: 3 },
-      { col: 15, row: 9 },
-      { col: 19, row: 9 },   // 基地所在
-    ];
-
-    this.baseCell = { col: 19, row: 9 };
+    if (mapConfig && Array.isArray(mapConfig.waypoints) && mapConfig.waypoints.length >= 2) {
+      this.mapName = mapConfig.name || '自定义地图';
+      this.waypoints = mapConfig.waypoints.map((wp) => ({ col: wp.col, row: wp.row }));
+      this.baseCell = mapConfig.baseCell
+        ? { col: mapConfig.baseCell.col, row: mapConfig.baseCell.row }
+        : { ...this.waypoints[this.waypoints.length - 1] };
+    } else {
+      // 默认地图（蛇形通道）——保持向后兼容
+      this.mapName = '蛇形通道';
+      this.waypoints = [
+        { col: -1, row: 2 },
+        { col: 4, row: 2 },
+        { col: 4, row: 8 },
+        { col: 10, row: 8 },
+        { col: 10, row: 3 },
+        { col: 15, row: 3 },
+        { col: 15, row: 9 },
+        { col: 19, row: 9 },
+      ];
+      this.baseCell = { col: 19, row: 9 };
+    }
 
     this._grid = [];
     this._buildGrid();
