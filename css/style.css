@@ -758,39 +758,97 @@ html, body {
     height: auto;
     min-height: 0;
   }
+  /* 面板改为底部抽屉：默认隐藏，panel-open 时滑出 */
   #side-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
     width: 100%;
     max-width: none;
-    flex: 0 0 auto;
+    flex: none;
     height: auto;
-    max-height: 42vh;
+    max-height: 55vh;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10;
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
+    padding-top: 8px;
   }
+  #side-panel.panel-open {
+    transform: translateY(0);
+  }
+  /* 抽屉拉手 */
+  #side-panel::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    margin: 0 auto 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+  /* 面板切换按钮：仅移动端可见 */
+  .panel-toggle {
+    display: inline-flex !important;
+  }
+}
+
+/* 桌面端隐藏面板切换和出售按钮 */
+.panel-toggle,
+.sell-btn {
+  display: none;
 }
 
 /* 小屏手机：收紧 HUD 与面板内边距，保证可读与可点 */
 @media (max-width: 480px) {
   #hud {
-    padding: 8px;
-    gap: 6px;
+    padding: 6px;
+    gap: 4px;
+  }
+  #hud-stats {
+    gap: 4px;
   }
   .hud-stat {
-    font-size: 13px;
-    padding: 4px 10px 4px 6px;
+    font-size: 12px;
+    padding: 4px 8px 4px 5px;
+    gap: 4px;
   }
   .hud-ico {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
   }
   .hud-sub {
     font-size: 10px;
   }
+  .weather-icon { font-size: 14px; }
+  .weather-name { font-size: 11px; }
+  .weather-timer { font-size: 10px; }
+  #hud-actions {
+    gap: 5px;
+  }
   #hud-actions button {
-    padding: 5px 12px;
+    padding: 7px 14px;
     font-size: 13px;
+    min-height: 36px;
+    border-radius: 8px;
+  }
+  /* 出售模式按钮在移动端可见 */
+  .sell-btn {
+    display: inline-flex !important;
+    background: linear-gradient(180deg, #e05555, #c04040);
+    color: #fff;
+    border-color: #8a2a2a;
+  }
+  .sell-btn.active {
+    background: linear-gradient(180deg, #ff7070, #e05050);
+    box-shadow: 0 0 12px rgba(224, 85, 85, 0.5);
   }
   .upgrade-panel .up-btn {
-    padding: 9px 10px;
+    padding: 11px 12px;
     gap: 7px;
+    min-height: 48px;
   }
   .up-name {
     font-size: 14px;
@@ -805,8 +863,9 @@ html, body {
     padding: 2px 8px;
   }
   .wpn-btn {
-    padding: 9px 10px;
+    padding: 11px 12px;
     gap: 5px;
+    min-height: 48px;
   }
   .wpn-name {
     font-size: 14px;
@@ -820,12 +879,62 @@ html, body {
     font-size: 11px;
   }
   #btn-unlock-magic {
-    padding: 9px 10px;
+    padding: 11px 12px;
+    min-height: 48px;
   }
   .overlay-card {
     padding: 20px 18px;
   }
   .overlay-card h2 {
     font-size: 30px;
+  }
+  /* 答题选项加大触控目标 */
+  .quiz-opt {
+    padding: 14px 16px;
+    font-size: 14px;
+    min-height: 48px;
+  }
+  .quiz-card {
+    padding: 18px 14px;
+  }
+  .quiz-question {
+    font-size: 15px;
+  }
+}
+
+/* ---------- 触控增强：所有可点元素最小 44px 触控目标 ---------- */
+@media (pointer: coarse) {
+  #hud-actions button,
+  .up-btn,
+  .wpn-btn,
+  #btn-unlock-magic,
+  .quiz-opt,
+  #btn-restart {
+    min-height: 44px;
+  }
+  /* 禁止文本选择（长按不弹菜单） */
+  #game-wrap,
+  #hud,
+  #side-panel {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  /* 取消 hover 效果（触摸设备无 hover，避免残留状态） */
+  .up-btn:hover:not(:disabled),
+  .wpn-btn:hover:not(:disabled),
+  #btn-unlock-magic:hover:not(:disabled),
+  .quiz-opt:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ---------- 横屏优化 ---------- */
+@media (max-width: 900px) and (orientation: landscape) {
+  #side-panel {
+    max-height: 45vh;
+  }
+  #hud {
+    padding: 4px 6px;
   }
 }

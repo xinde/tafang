@@ -142,8 +142,41 @@ const hudWave = document.getElementById('hud-wave');
 const hudMapName = document.getElementById('hud-map-name');
 const btnNextWave = document.getElementById('btn-next-wave');
 const btnMute = document.getElementById('btn-mute');
+const btnSell = document.getElementById('btn-sell');
+const btnPanel = document.getElementById('btn-panel');
 const weaponGrid = document.getElementById('weapon-grid');
 const weaponDesc = document.getElementById('weapon-desc');
+
+// ---------- 出售模式（移动端：tap 即出售，无需长按） ----------
+let sellMode = false;
+function toggleSellMode() {
+  sellMode = !sellMode;
+  if (btnSell) {
+    btnSell.classList.toggle('active', sellMode);
+    btnSell.setAttribute('aria-pressed', String(sellMode));
+    btnSell.textContent = sellMode ? '出售中' : '出售';
+  }
+  if (navigator.vibrate) navigator.vibrate(15);
+}
+if (btnSell) {
+  btnSell.addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleSellMode();
+  });
+}
+
+// ---------- 面板切换（移动端抽屉） ----------
+const sidePanel = document.getElementById('side-panel');
+function togglePanel() {
+  if (!sidePanel) return;
+  sidePanel.classList.toggle('panel-open');
+}
+if (btnPanel) {
+  btnPanel.addEventListener('click', (e) => {
+    e.preventDefault();
+    togglePanel();
+  });
+}
 
 function refreshMuteBtn() {
   if (!btnMute) return;
@@ -465,9 +498,22 @@ btnNextWave.addEventListener('click', () => {
   if (!gameOver) waves.startNextWave();
 });
 
-// ---------- 交互：点击放置士兵（按当前武器） ----------
+// ---------- 交互：点击放置士兵（按当前武器） / 出售模式 ----------
 input.onCellClick(({ col, row }) => {
   if (gameOver) { restart(); return; }   // 游戏结束后点击画面重开
+  // 出售模式：tap 即出售（移动端友好）
+  if (sellMode) {
+    const s = soldiers.getAt(col, row);
+    if (s) {
+      soldiers.removeAt(col, row);
+      map.release(col, row);
+      const refund = Math.floor((s.cost || 0) * 0.5);
+      if (refund > 0) economy.refund(refund);
+      audio.play('sell');
+      if (navigator.vibrate) navigator.vibrate(20);
+    }
+    return;
+  }
   if (!isWeaponUnlocked(currentWeapon)) return;
   if (!map.canPlace(col, row)) return;
   if (soldiers.getAt(col, row)) return;
@@ -480,6 +526,7 @@ input.onCellClick(({ col, row }) => {
     s.recompute(combinedMultipliers()); // 应用全局强化 × 天气乘数
     soldiers.add(s);
     audio.play('place');
+    if (navigator.vibrate) navigator.vibrate(10);
   }
 });
 
@@ -493,6 +540,7 @@ input.onCellRightClick(({ col, row }) => {
   const refund = Math.floor((s.cost || 0) * 0.5);
   if (refund > 0) economy.refund(refund);
   audio.play('sell');
+  if (navigator.vibrate) navigator.vibrate(20);
 });
 
 // ---------- 重开 ----------
