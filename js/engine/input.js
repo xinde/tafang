@@ -80,7 +80,7 @@ export class Input {
   }
 
   /** 屏幕坐标 -> 网格坐标，越界返回 null */
-  _clientToCell(clientX, clientY) {
+  _clientToCell(clientX, clientY, { snap = false } = {}) {
     const rect = this.canvas.getBoundingClientRect();
     const scaleX = this.canvas.width / rect.width;
     const scaleY = this.canvas.height / rect.height;
@@ -100,8 +100,8 @@ export class Input {
       row = Math.max(0, Math.min(this.rows - 1, row));
     }
 
-    // 吸格：如果附近有吸附目标，吸附过去
-    const snapped = this._snapToTarget(col, row, x, y);
+    // 吸格：仅触摸时启用（方便手指点中已有塔），桌面端鼠标不吸附
+    const snapped = snap ? this._snapToTarget(col, row, x, y) : null;
     return snapped || { col, row };
   }
 
@@ -140,8 +140,8 @@ export class Input {
     if (this._onMove) this._onMove(this.hoverCell);
   }
 
-  _eventToCell(e) {
-    return this._clientToCell(e.clientX, e.clientY);
+  _eventToCell(e, opts) {
+    return this._clientToCell(e.clientX, e.clientY, opts);
   }
 
   // ---- 触摸处理 ----
@@ -150,7 +150,7 @@ export class Input {
     if (e.touches.length !== 1) return;
     e.preventDefault();
     const t = e.touches[0];
-    const cell = this._clientToCell(t.clientX, t.clientY);
+    const cell = this._clientToCell(t.clientX, t.clientY, { snap: true });
     this._touchActive = true;
     this._touchStartCell = cell;
     this._touchStartPos = { x: t.clientX, y: t.clientY };
@@ -185,7 +185,7 @@ export class Input {
     }
 
     // 实时更新预览位置
-    const cell = this._clientToCell(t.clientX, t.clientY);
+    const cell = this._clientToCell(t.clientX, t.clientY, { snap: true });
     this.hoverCell = cell;
     if (this._onMove) this._onMove(cell);
   }

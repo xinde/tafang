@@ -133,6 +133,7 @@ const weaponOrder = [
 // ---------- 游戏结束状态 ----------
 let gameOver = false;
 let victory = false;
+let overlayShown = false;
 let paused = false; // 答题门禁暂停：update 跳过逻辑，render 照常（画面定格）
 
 // ---------- HUD / 武器面板 ----------
@@ -670,7 +671,8 @@ function showOverlay(title, sub, isWin) {
   const waveScore = (waveReached / maxWaves) * 600;
   const lifeScore = (baseLives / CONFIG.BASE_LIVES) * 200;
   const goldScore = Math.min(gold / 300, 1) * 100;
-  const upScore = (upLevels / 17) * 100; // 17 = 总满级数(6+6+5)
+  const totalMaxLevels = UPGRADE_KEYS.reduce((sum, k) => sum + UPGRADE_DEFS[k].maxLevel, 0);
+  const upScore = (upLevels / totalMaxLevels) * 100;
   const totalScore = Math.round(waveScore + lifeScore + goldScore + upScore);
 
   // 评级
@@ -845,14 +847,15 @@ function render() {
       renderer.drawHover(col, row, valid);
       if (valid && isWeaponUnlocked(currentWeapon)) {
         const w = WEAPONS[currentWeapon];
-        const mul = upgrades.multipliers;
+        const mul = combinedMultipliers();
         renderer.drawSoldier(col, row, { color: w.color, range: w.range * mul.rangeMul, showRange: true });
       }
     }
   }
 
-  // 游戏结束覆盖层（胜利/失败）
-  if (gameOver) {
+  // 游戏结束覆盖层（胜利/失败）——仅在状态翻转时调用一次，避免每帧 DOM 重建
+  if (gameOver && !overlayShown) {
+    overlayShown = true;
     if (victory) {
       showOverlay('胜利！', `坚守阵地，成功抵御全部 ${waves.maxWaves} 波怪兽。`, true);
     } else {

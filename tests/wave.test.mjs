@@ -262,7 +262,7 @@ test('类型解锁阈值按配置生效，不会提前出现', () => {
 test('随机性：第2波起，多次生成的数量/组合会变化', () => {
   const map = new GameMap();
   const waves = new WaveManager(map, waveConfig);
-  // 第1波恒定（6 只全 NORMAL）
+  // 第1波恒定（7 只全 NORMAL：baseCount 5 + 1×countPerWave 2）
   const seen1 = new Set();
   for (let k = 0; k < 10; k++) {
     const w = waves._buildWave(1);

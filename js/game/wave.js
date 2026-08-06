@@ -68,7 +68,7 @@ export class WaveManager {
    * - 血量：1 + (index-1)*0.25；速度：封顶 +60%；护甲加成：每 4 波 +1。
    * - 随机性：①部分 NORMAL 槽位随机升级为已解锁的高阶类型；②生成顺序整体洗牌。
    *
-   * 不变量（回归测试依赖）：第 1 波恒为 6 只全 NORMAL；第 5 波必含 FAST 与 TANK、
+   * 不变量（回归测试依赖）：第 1 波恒为 7 只全 NORMAL（baseCount 5 + 1×countPerWave 2）；第 5 波必含 FAST 与 TANK、
    * 且任一怪兽血量均 > 第 1 波首怪（20）。
    *
    * @param {number} index 波数（从 1 开始）
@@ -228,9 +228,13 @@ export class WaveManager {
         x: bc.col * cs + cs / 2,
         y: bc.row * cs + cs / 2,
         lives: economy.baseLives,
-        // 基地以 takeDamage 代理漏怪扣血（命中 = 漏一次），保证 projectile 接口一致
+        // 基地受弹道伤害：远程怪弹道命中基地时按实际伤害扣血
         alive: economy.baseLives > 0,
-        takeDamage: () => { economy.damageBase(1); return 1; },
+        takeDamage: (amount) => {
+          const dmg = Math.max(1, Math.round(amount || 1));
+          economy.damageBase(dmg);
+          return dmg;
+        },
       },
       projectiles,
     };
@@ -240,6 +244,7 @@ export class WaveManager {
     }
 
     // 3) 结算：漏怪扣基地血 / 击杀掉金币 + 死亡特效
+    let killCount = 0;
     for (let i = this.active.length - 1; i >= 0; i--) {
       const m = this.active[i];
       if (m.reachedBase) {
@@ -248,11 +253,12 @@ export class WaveManager {
         this.active.splice(i, 1);
       } else if (!m.alive) {
         economy.earn(m.reward);
-        audio.play('kill');
+        killCount++;
         if (effects) effects.spawnDeath(m.x, m.y, m.color);
         this.active.splice(i, 1);
       }
     }
+    if (killCount > 0) audio.play('kill', { throttle: 50 });
 
     // 4) 被摧毁的防御塔：释放格子 + 返还 50% 成本 + 爆裂特效 + 击杀者回血
     const soldiers = (this.combat && this.combat.soldiers) || null;

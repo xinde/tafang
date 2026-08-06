@@ -4,9 +4,10 @@ import { CONFIG } from '../config.js';
  * 单元格类型
  */
 export const CellType = {
-  EMPTY: 0,   // 可放置士兵
-  PATH: 1,    // 怪兽行进路径，不可放置
-  BASE: 2,    // 基地，不可放置
+  EMPTY: 0,     // 可放置士兵
+  PATH: 1,      // 怪兽行进路径，不可放置
+  BASE: 2,      // 基地，不可放置
+  OCCUPIED: 3,  // 已放置士兵
 };
 
 /**
@@ -120,7 +121,7 @@ export class GameMap {
   /** 占用某网格（放置士兵后调用） */
   occupy(col, row) {
     if (this.getCell(col, row) === CellType.EMPTY) {
-      this._grid[row][col] = 3; // 3 = 已占用
+      this._grid[row][col] = CellType.OCCUPIED;
       return true;
     }
     return false;
@@ -128,7 +129,7 @@ export class GameMap {
 
   /** 释放某网格（移除士兵/被摧毁时调用） */
   release(col, row) {
-    if (this._grid[row] && this._grid[row][col] === 3) {
+    if (this._grid[row] && this._grid[row][col] === CellType.OCCUPIED) {
       this._grid[row][col] = CellType.EMPTY;
     }
   }

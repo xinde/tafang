@@ -1,5 +1,8 @@
 {
   "type": "module",
   "private": true,
-  "description": "塔防游戏：Canvas 渲染循环、怪兽波次、士兵战斗与武器、全局强化升级、HUD 与结算"
+  "description": "塔防游戏：Canvas 渲染循环、怪兽波次、士兵战斗与武器、全局强化升级、HUD 与结算",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  }
 }

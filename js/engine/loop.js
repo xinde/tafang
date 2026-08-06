@@ -50,10 +50,15 @@ export class GameLoop {
     if (frameTime > 0.25) frameTime = 0.25;
     this.accumulator += frameTime;
 
-    while (this.accumulator >= this.fixedDt) {
+    // 最大步数防御：防止帧时间过长时螺旋死亡
+    const MAX_STEPS = 20;
+    let steps = 0;
+    while (this.accumulator >= this.fixedDt && steps < MAX_STEPS) {
       this.update(this.fixedDt);
       this.accumulator -= this.fixedDt;
+      steps++;
     }
+    if (steps >= MAX_STEPS) this.accumulator = 0;
 
     const alpha = this.accumulator / this.fixedDt;
     this.render(alpha);
