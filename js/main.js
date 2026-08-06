@@ -730,21 +730,21 @@ function showOverlay(title, sub, isWin) {
   const totalScore = Math.round(waveScore + lifeScore + goldScore + upScore);
 
   // 评级
-  let grade, medal;
-  if (isWin && totalScore >= 850) { grade = 'S+'; medal = '🏆'; }
-  else if (isWin && totalScore >= 700) { grade = 'S'; medal = '🥇'; }
-  else if (totalScore >= 550) { grade = 'A'; medal = '🥈'; }
-  else if (totalScore >= 400) { grade = 'B'; medal = '🥉'; }
-  else if (totalScore >= 250) { grade = 'C'; medal = '🎖️'; }
-  else { grade = 'D'; medal = '📋'; }
+  let grade;
+  if (isWin && totalScore >= 850) { grade = 'S+'; }
+  else if (isWin && totalScore >= 700) { grade = 'S'; }
+  else if (totalScore >= 550) { grade = 'A'; }
+  else if (totalScore >= 400) { grade = 'B'; }
+  else if (totalScore >= 250) { grade = 'C'; }
+  else { grade = 'D'; }
 
   // 标题与副标题
   overlayTitle.textContent = title;
   overlayTitle.className = isWin ? 'win' : 'lose';
   overlaySub.textContent = sub;
 
-  // 填充数据
-  document.getElementById('score-medal').textContent = medal;
+  // 填充数据：评级字母作为顶部标记
+  document.getElementById('score-medal').textContent = grade;
   document.getElementById('score-waves').textContent = `${waveReached}/${maxWaves}`;
   document.getElementById('score-gold').textContent = gold;
   document.getElementById('score-lives').textContent = `${baseLives}/${CONFIG.BASE_LIVES}`;
@@ -769,26 +769,26 @@ document.getElementById('btn-share').addEventListener('click', async () => {
   const maxWaves = waves.maxWaves;
   const towerCount = soldiers.getAll().length;
   const grade = document.getElementById('score-grade').textContent;
-  const result = victory ? '🏆 通关胜利' : '💀 防守失败';
+  const result = victory ? '通关胜利' : '防守失败';
 
   const text =
     `${result}\n` +
-    `📊 塔防战绩单\n` +
-    `━━━━━━━━━━━━━\n` +
-    `⭐ 评级: ${grade}\n` +
-    `🌊 波次: ${waveReached}/${maxWaves}\n` +
-    `🏰 基地: ${baseLives}/${CONFIG.BASE_LIVES}\n` +
-    `💰 金币: ${gold}\n` +
-    `🏹 塔数: ${towerCount}\n` +
-    `🗺️ 地图: ${map.mapName || '随机'}\n` +
-    `━━━━━━━━━━━━━\n` +
-    `来挑战我的战绩吧！`;
+    `塔防战绩单\n` +
+    `———————————\n` +
+    `评级: ${grade}\n` +
+    `波次: ${waveReached}/${maxWaves}\n` +
+    `基地: ${baseLives}/${CONFIG.BASE_LIVES}\n` +
+    `金币: ${gold}\n` +
+    `塔数: ${towerCount}\n` +
+    `地图: ${map.mapName || '随机'}\n` +
+    `———————————\n` +
+    `来挑战我的战绩吧`;
 
   try {
     await navigator.clipboard.writeText(text);
     const btn = document.getElementById('btn-share');
     const orig = btn.textContent;
-    btn.textContent = '✅ 已复制';
+    btn.textContent = '已复制';
     btn.classList.add('copied');
     setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
   } catch (_) {

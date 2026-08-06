@@ -688,16 +688,34 @@ html, body {
   background: radial-gradient(ellipse at top, rgba(224, 85, 85, 0.18), transparent 70%);
 }
 
-.score-medal {
-  font-size: 56px;
-  line-height: 1;
-  margin-bottom: 8px;
-  animation: medal-bounce 0.8s ease 0.2s both;
+/* 顶部评级标记：纯字母设计，无 emoji */
+.score-rank-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 10px;
+  border-radius: 50%;
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  border: 3px solid;
+  animation: rank-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
 }
-@keyframes medal-bounce {
-  0% { transform: scale(0) rotate(-20deg); }
-  60% { transform: scale(1.2) rotate(5deg); }
-  100% { transform: scale(1) rotate(0); }
+@keyframes rank-pop {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.score-card.theme-win .score-rank-mark {
+  color: #ffd24a;
+  border-color: rgba(255, 210, 74, 0.5);
+  background: rgba(255, 210, 74, 0.08);
+}
+.score-card.theme-lose .score-rank-mark {
+  color: #ff7a7a;
+  border-color: rgba(255, 122, 122, 0.4);
+  background: rgba(255, 122, 122, 0.06);
 }
 
 .score-title {
@@ -1115,8 +1133,8 @@ html, body {
     min-height: 48px;
   }
   .score-card { max-width: 340px; }
-  .score-hero { padding: 20px 16px 14px; }
-  .score-medal { font-size: 44px; }
+  .score-hero { padding: 18px 14px 12px; }
+  .score-rank-mark { width: 56px; height: 56px; font-size: 28px; }
   .score-title { font-size: 26px; }
   /* 答题选项加大触控目标 */
   .quiz-opt {
