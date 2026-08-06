@@ -135,14 +135,32 @@ export class UltimateManager {
     let result = null;
 
     if (this.activeUltimate === UltimateType.METEOR) {
-      // 陨石雨：每 METEOR_INTERVAL 秒在随机位置生成陨石
+      // 陨石雨：每 METEOR_INTERVAL 秒沿怪物行进路径附近生成陨石
       this._meteorTimer -= dt;
       if (this._meteorTimer <= 0) {
         this._meteorTimer = METEOR_INTERVAL;
         const hits = [];
         for (let i = 0; i < METEOR_COUNT_PER_HIT; i++) {
-          const x = Math.random() * ctx.canvasW;
-          const y = Math.random() * ctx.canvasH;
+          // 优先落在怪物附近（50% 概率锁定怪物附近，50% 落在路径随机位置）
+          let x, y;
+          const liveMonsters = ctx.monsters.filter((m) => m.alive);
+          if (liveMonsters.length > 0 && Math.random() < 0.7) {
+            // 锁定一只随机怪物的附近
+            const target = liveMonsters[Math.floor(Math.random() * liveMonsters.length)];
+            const offset = METEOR_RADIUS * 0.6;
+            x = target.x + (Math.random() - 0.5) * offset * 2;
+            y = target.y + (Math.random() - 0.5) * offset * 2;
+          } else {
+            // 路径附近随机位置（使用怪物位置作为路径近似）
+            if (liveMonsters.length > 0) {
+              const target = liveMonsters[Math.floor(Math.random() * liveMonsters.length)];
+              x = target.x + (Math.random() - 0.5) * METEOR_RADIUS * 3;
+              y = target.y + (Math.random() - 0.5) * METEOR_RADIUS * 3;
+            } else {
+              x = Math.random() * ctx.canvasW;
+              y = Math.random() * ctx.canvasH;
+            }
+          }
           // 对范围内怪物造成伤害
           const hitMonsters = [];
           for (const m of ctx.monsters) {

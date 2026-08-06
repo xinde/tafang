@@ -243,7 +243,7 @@ export class WaveManager {
       m.update(dt, { speedMul: speedMul * monsterSpeedMul });   // 边打边走，天气影响速度
     }
 
-    // 3) 结算：漏怪扣基地血 / 击杀掉金币 + 死亡特效
+    // 3) 结算：漏怪扣基地血 / 击杀掉金币 + 死亡特效 + 击杀回血
     let killCount = 0;
     for (let i = this.active.length - 1; i >= 0; i--) {
       const m = this.active[i];
@@ -255,6 +255,16 @@ export class WaveManager {
         economy.earn(m.reward);
         killCount++;
         if (effects) effects.spawnDeath(m.x, m.y, m.color);
+        // 击杀回血：击杀者是防御塔（有 weapon 属性）时，回复该塔少量生命
+        const killer = m.killedBy;
+        if (killer && killer.alive && killer.weapon && typeof killer.heal === 'function') {
+          // 防御塔击杀怪物回血：maxHp 的 5%（约5点），不复活已死亡塔
+          const healAmount = Math.round(killer.maxHp * 0.05);
+          if (healAmount > 0) {
+            const healed = killer.heal(healAmount);
+            if (healed > 0 && effects) effects.spawnHeal(killer.x, killer.y, healed);
+          }
+        }
         // 大招充能
         if (this._onKill) this._onKill(m);
         this.active.splice(i, 1);

@@ -67,6 +67,18 @@ export class Soldier {
     return dmg;
   }
 
+  /**
+   * 回血（击杀怪物时触发）。不复活已死亡塔，上限钳位到 maxHp。
+   * @param {number} amount 回血量
+   * @returns {number} 实际回血量（0 = 未回血）
+   */
+  heal(amount) {
+    if (!this.alive || amount <= 0) return 0;
+    const healed = Math.min(amount, this.maxHp - this.hp);
+    this.hp += healed;
+    return healed;
+  }
+
   /** 剩余血量比例 0..1，用于血条渲染 */
   get hpRatio() {
     return this.maxHp > 0 ? this.hp / this.maxHp : 0;
@@ -156,10 +168,14 @@ export class Soldier {
         radius: w.projRadius || 4,
         weaponType: w.type,
         hitSfx: w.hitSfx,
+        source: this,  // 记录开火者，击杀怪物后据此回血
       }));
     } else {
       // 近战即时命中 + 斩击弧光
+      const wasAlive = target.alive;
       const dmg = target.takeDamage(this.damage, w.pierce || 0);
+      // 击杀记录：近战致死时直接标记
+      if (wasAlive && !target.alive) target.killedBy = this;
       if (w.slow) target.applySlow(w.slow.factor, w.slow.duration);
       const angle = Math.atan2(target.y - this.y, target.x - this.x);
       if (ctx.effects) {
