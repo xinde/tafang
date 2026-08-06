@@ -401,6 +401,8 @@ const quizGate = new QuizGate({
   onOpen: () => {
     paused = true;
     quizOverlay.classList.remove('hidden');
+    // 移动端：收起底部面板，避免遮挡答题弹窗
+    if (sidePanel) sidePanel.classList.remove('panel-open');
   },
   onResolve: ({ correct, applied }) => {
     if (applied) {
