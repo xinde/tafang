@@ -46,10 +46,42 @@
         </div>
       </div>
       <div id="overlay" class="hidden">
-        <div class="overlay-card">
-          <h2 id="overlay-title">游戏结束</h2>
-          <p id="overlay-sub"></p>
-          <button id="btn-restart">重新开始</button>
+        <div class="score-card" id="score-card">
+          <div class="score-hero">
+            <div class="score-medal" id="score-medal">🏆</div>
+            <h2 class="score-title" id="overlay-title">游戏结束</h2>
+            <p class="score-subtitle" id="overlay-sub"></p>
+          </div>
+          <div class="score-grid">
+            <div class="score-item">
+              <span class="score-label">通关波次</span>
+              <span class="score-value" id="score-waves">0</span>
+            </div>
+            <div class="score-item">
+              <span class="score-label">剩余金币</span>
+              <span class="score-value" id="score-gold">0</span>
+            </div>
+            <div class="score-item">
+              <span class="score-label">基地生命</span>
+              <span class="score-value" id="score-lives">0</span>
+            </div>
+            <div class="score-item">
+              <span class="score-label">部署塔数</span>
+              <span class="score-value" id="score-towers">0</span>
+            </div>
+          </div>
+          <div class="score-grade-section">
+            <span class="score-grade-label">综合评分</span>
+            <span class="score-grade" id="score-grade">--</span>
+          </div>
+          <div class="score-map-info">
+            <span class="score-map-label">地图</span>
+            <span class="score-map-name" id="score-map">--</span>
+          </div>
+          <div class="score-actions">
+            <button id="btn-share" class="btn-share">📋 复制战绩</button>
+            <button id="btn-restart" class="btn-restart">🔄 再来一局</button>
+          </div>
         </div>
       </div>
     </div>

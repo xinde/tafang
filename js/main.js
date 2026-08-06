@@ -587,16 +587,97 @@ function refreshWeatherHud() {
   }
 }
 
-// ---------- 胜负覆盖层 ----------
+// ---------- 胜负覆盖层（分数卡片） ----------
 const overlay = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlaySub = document.getElementById('overlay-sub');
+const scoreCard = document.getElementById('score-card');
+
+/** 计算综合评分并渲染分数卡片 */
 function showOverlay(title, sub, isWin) {
+  const { gold, baseLives } = economy.getState();
+  const waveReached = waves.waveIndex;
+  const maxWaves = waves.maxWaves;
+  const towerCount = soldiers.getAll().length;
+  const upLevels = UPGRADE_KEYS.reduce((sum, k) => sum + upgrades.getLevel(k), 0);
+
+  // 综合评分：波次进度(60%) + 剩余生命(20%) + 剩余金币(10%) + 升级投入(10%)
+  const waveScore = (waveReached / maxWaves) * 600;
+  const lifeScore = (baseLives / CONFIG.BASE_LIVES) * 200;
+  const goldScore = Math.min(gold / 300, 1) * 100;
+  const upScore = (upLevels / 17) * 100; // 17 = 总满级数(6+6+5)
+  const totalScore = Math.round(waveScore + lifeScore + goldScore + upScore);
+
+  // 评级
+  let grade, medal;
+  if (isWin && totalScore >= 850) { grade = 'S+'; medal = '🏆'; }
+  else if (isWin && totalScore >= 700) { grade = 'S'; medal = '🥇'; }
+  else if (totalScore >= 550) { grade = 'A'; medal = '🥈'; }
+  else if (totalScore >= 400) { grade = 'B'; medal = '🥉'; }
+  else if (totalScore >= 250) { grade = 'C'; medal = '🎖️'; }
+  else { grade = 'D'; medal = '📋'; }
+
+  // 标题与副标题
   overlayTitle.textContent = title;
   overlayTitle.className = isWin ? 'win' : 'lose';
   overlaySub.textContent = sub;
+
+  // 填充数据
+  document.getElementById('score-medal').textContent = medal;
+  document.getElementById('score-waves').textContent = `${waveReached}/${maxWaves}`;
+  document.getElementById('score-gold').textContent = gold;
+  document.getElementById('score-lives').textContent = `${baseLives}/${CONFIG.BASE_LIVES}`;
+  document.getElementById('score-towers').textContent = towerCount;
+  document.getElementById('score-grade').textContent = grade;
+  document.getElementById('score-map').textContent = map.mapName || '随机地图';
+
+  // 评级配色
+  const gradeEl = document.getElementById('score-grade');
+  gradeEl.className = `score-grade grade-${grade.replace('+', '').toLowerCase()}`;
+
+  // 卡片主题色
+  scoreCard.className = `score-card ${isWin ? 'theme-win' : 'theme-lose'}`;
+
   overlay.classList.remove('hidden');
 }
+
+// ---------- 复制战绩分享 ----------
+document.getElementById('btn-share').addEventListener('click', async () => {
+  const { gold, baseLives } = economy.getState();
+  const waveReached = waves.waveIndex;
+  const maxWaves = waves.maxWaves;
+  const towerCount = soldiers.getAll().length;
+  const grade = document.getElementById('score-grade').textContent;
+  const result = victory ? '🏆 通关胜利' : '💀 防守失败';
+
+  const text =
+    `${result}\n` +
+    `📊 塔防战绩单\n` +
+    `━━━━━━━━━━━━━\n` +
+    `⭐ 评级: ${grade}\n` +
+    `🌊 波次: ${waveReached}/${maxWaves}\n` +
+    `🏰 基地: ${baseLives}/${CONFIG.BASE_LIVES}\n` +
+    `💰 金币: ${gold}\n` +
+    `🏹 塔数: ${towerCount}\n` +
+    `🗺️ 地图: ${map.mapName || '随机'}\n` +
+    `━━━━━━━━━━━━━\n` +
+    `来挑战我的战绩吧！`;
+
+  try {
+    await navigator.clipboard.writeText(text);
+    const btn = document.getElementById('btn-share');
+    const orig = btn.textContent;
+    btn.textContent = '✅ 已复制';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+  } catch (_) {
+    // 降级：选中文本供用户手动复制
+    const range = document.createRange();
+    range.selectNode(scoreCard);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+  }
+});
 
 // ---------- 主循环 ----------
 function update(dt) {
