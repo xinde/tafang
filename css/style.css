@@ -1079,3 +1079,150 @@ html, body {
     padding: 4px 6px;
   }
 }
+
+/* ---------- 移动端底部操作栏 ---------- */
+.mobile-bar {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .mobile-bar {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9;
+    background: linear-gradient(180deg, rgba(22, 22, 44, 0.98), rgba(15, 15, 30, 0.99));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 6px 8px;
+    padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+    gap: 6px;
+  }
+
+  /* 武器快选条：横向滚动 */
+  .mobile-weapon-bar {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 2px 0;
+  }
+  .mobile-weapon-bar::-webkit-scrollbar { display: none; }
+
+  .mwp-btn {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 52px;
+    min-height: 52px;
+    padding: 4px 8px;
+    border-radius: 10px;
+    background: linear-gradient(145deg, rgba(50, 50, 88, 0.95), rgba(35, 35, 66, 0.95));
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    color: #dde;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s;
+  }
+  .mwp-btn:active { transform: scale(0.92); }
+  .mwp-btn.active {
+    border-color: rgba(255, 210, 74, 0.6);
+    background: linear-gradient(145deg, rgba(80, 70, 120, 0.98), rgba(50, 45, 80, 0.98));
+    box-shadow: 0 0 10px rgba(255, 210, 74, 0.15);
+  }
+  .mwp-btn.locked {
+    opacity: 0.4;
+  }
+  .mwp-btn .mwp-tag {
+    font-size: 10px;
+    color: #9a9;
+  }
+  .mwp-btn.active .mwp-tag { color: #ffd24a; }
+  .mwp-btn .mwp-cost {
+    font-size: 10px;
+    color: #ffd24a;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* 操作按钮栏 */
+  .mobile-action-bar {
+    display: flex;
+    gap: 6px;
+  }
+  .mb-btn {
+    flex: 1;
+    min-height: 44px;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, filter 0.15s;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .mb-btn:active { transform: scale(0.94); }
+  .mb-btn:disabled { opacity: 0.4; }
+
+  .mb-wave {
+    background: linear-gradient(180deg, #5ad07a, #3a9048);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(90, 208, 122, 0.2);
+  }
+  .mb-wave:disabled {
+    background: #2a3a30;
+  }
+
+  .mb-sell {
+    background: linear-gradient(180deg, #555, #333);
+    color: #ccc;
+  }
+  .mb-sell.active {
+    background: linear-gradient(180deg, #e05555, #c04040);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(224, 85, 85, 0.3);
+  }
+
+  .mb-panel {
+    background: linear-gradient(180deg, #4a6aa0, #354a78);
+    color: #fff;
+  }
+
+  .mb-mute {
+    flex: 0 0 44px;
+    background: linear-gradient(180deg, #4a4a78, #35355a);
+    color: #fff;
+    font-size: 18px;
+  }
+
+  /* 移动端隐藏桌面端 HUD 按钮（避免重复） */
+  #hud-actions {
+    display: none !important;
+  }
+
+  /* 画布给底部栏留空间 */
+  #game-wrap {
+    padding-bottom: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mwp-btn {
+    min-width: 48px;
+    min-height: 48px;
+  }
+  .mb-btn {
+    font-size: 12px;
+  }
+}

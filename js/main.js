@@ -147,19 +147,40 @@ const btnPanel = document.getElementById('btn-panel');
 const weaponGrid = document.getElementById('weapon-grid');
 const weaponDesc = document.getElementById('weapon-desc');
 
+// ---------- 移动端底部栏元素 ----------
+const mobileWeaponBar = document.getElementById('mobile-weapon-bar');
+const btnNextWaveM = document.getElementById('btn-next-wave-m');
+const btnSellM = document.getElementById('btn-sell-m');
+const btnPanelM = document.getElementById('btn-panel-m');
+const btnMuteM = document.getElementById('btn-mute-m');
+
 // ---------- 出售模式（移动端：tap 即出售，无需长按） ----------
 let sellMode = false;
 function toggleSellMode() {
   sellMode = !sellMode;
+  // 桌面端按钮
   if (btnSell) {
     btnSell.classList.toggle('active', sellMode);
     btnSell.setAttribute('aria-pressed', String(sellMode));
     btnSell.textContent = sellMode ? '出售中' : '出售';
   }
+  // 移动端按钮
+  if (btnSellM) {
+    btnSellM.classList.toggle('active', sellMode);
+    btnSellM.textContent = sellMode ? '出售中' : '出售';
+  }
   if (navigator.vibrate) navigator.vibrate(15);
 }
+// 桌面端出售按钮
 if (btnSell) {
   btnSell.addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleSellMode();
+  });
+}
+// 移动端出售按钮
+if (btnSellM) {
+  btnSellM.addEventListener('click', (e) => {
     e.preventDefault();
     toggleSellMode();
   });
@@ -172,9 +193,22 @@ function togglePanel() {
   sidePanel.classList.toggle('panel-open');
 }
 if (btnPanel) {
-  btnPanel.addEventListener('click', (e) => {
-    e.preventDefault();
-    togglePanel();
+  btnPanel.addEventListener('click', (e) => { e.preventDefault(); togglePanel(); });
+}
+if (btnPanelM) {
+  btnPanelM.addEventListener('click', (e) => { e.preventDefault(); togglePanel(); });
+}
+
+// 移动端：开波/静音按钮镜像
+if (btnNextWaveM) {
+  btnNextWaveM.addEventListener('click', () => { if (!gameOver) waves.startNextWave(); });
+}
+if (btnMuteM) {
+  btnMuteM.addEventListener('click', () => {
+    const muted = audio.toggleMute();
+    try { localStorage.setItem(MUTE_KEY, muted ? '1' : '0'); } catch (_) {}
+    refreshMuteBtn();
+    if (btnMuteM) btnMuteM.textContent = muted ? '🔇' : '🔊';
   });
 }
 
@@ -231,6 +265,22 @@ function renderWeaponButtons() {
 }
 renderWeaponButtons();
 
+// ---------- 移动端武器快选条 ----------
+function renderMobileWeaponBar() {
+  if (!mobileWeaponBar) return;
+  mobileWeaponBar.innerHTML = weaponOrder.map((type) => {
+    const w = WEAPONS[type];
+    return `<button class="mwp-btn" data-weapon="${type}" type="button">
+      <span class="mwp-tag">${w.tag}</span>
+      <span class="mwp-cost">${w.cost}金</span>
+    </button>`;
+  }).join('');
+  for (const btn of mobileWeaponBar.querySelectorAll('.mwp-btn')) {
+    btn.addEventListener('click', () => selectWeapon(btn.dataset.weapon));
+  }
+}
+renderMobileWeaponBar();
+
 function refreshWeaponHud() {
   const gold = economy.getState().gold;
   const w = WEAPONS[currentWeapon];
@@ -255,11 +305,26 @@ function refreshWeaponHud() {
         : `${index + 1} ${weaponDetail(def)}`
     );
   }
+  // 移动端武器快选条同步状态
+  if (mobileWeaponBar) {
+    for (const btn of mobileWeaponBar.querySelectorAll('.mwp-btn')) {
+      const t = btn.dataset.weapon;
+      const locked = t === WeaponType.MAGIC && !upgrades.magicUnlocked;
+      btn.classList.toggle('active', t === currentWeapon);
+      btn.classList.toggle('locked', locked);
+      btn.disabled = locked;
+    }
+  }
 }
 
 function refreshHud({ gold, baseLives }) {
   hudGold.querySelector('.hud-val').textContent = gold;
   hudLives.querySelector('.hud-val').textContent = baseLives;
+  // 移动端开波按钮状态同步
+  if (btnNextWaveM) {
+    btnNextWaveM.disabled = gameOver || waves.isWaveInProgress() || waves.waveIndex >= waves.maxWaves;
+    btnNextWaveM.textContent = waves.waveIndex === 0 ? '开始' : (waves.isWaveInProgress() ? '进行中' : '下一波');
+  }
 }
 
 /** 刷新升级面板：价格/等级/可用性 + 魔法解锁按钮 */
@@ -762,15 +827,27 @@ function render() {
   // 天气视觉特效（风线/雨滴/雪花，画在游戏内容之上、覆盖层之下）
   weatherFX.draw(ctx, CANVAS_WIDTH, CANVAS_HEIGHT, CONFIG.FIXED_DT, weather.currentWeather);
 
+  // 注入吸格目标：已放置士兵的格子（触摸时吸附，方便点中）
+  input.setSnapTargets(soldiers.getAll().map((s) => ({ col: s.col, row: s.row })));
+
   // 悬停高亮 + 预览攻击范围（答题暂停时不显示，避免遮罩下残留预览）
   if (input.hoverCell && !gameOver && !paused) {
     const { col, row } = input.hoverCell;
     const valid = map.canPlace(col, row) && !soldiers.getAt(col, row);
-    renderer.drawHover(col, row, valid);
-    if (valid && isWeaponUnlocked(currentWeapon)) {
-      const w = WEAPONS[currentWeapon];
-      const mul = upgrades.multipliers;
-      renderer.drawSoldier(col, row, { color: w.color, range: w.range * mul.rangeMul, showRange: true });
+    // 出售模式：高亮已有塔而非空地
+    if (sellMode) {
+      const soldier = soldiers.getAt(col, row);
+      renderer.drawHover(col, row, !!soldier);
+      if (soldier) {
+        renderer.drawSoldier(col, row, { color: '#e05555', range: soldier.range, showRange: true });
+      }
+    } else {
+      renderer.drawHover(col, row, valid);
+      if (valid && isWeaponUnlocked(currentWeapon)) {
+        const w = WEAPONS[currentWeapon];
+        const mul = upgrades.multipliers;
+        renderer.drawSoldier(col, row, { color: w.color, range: w.range * mul.rangeMul, showRange: true });
+      }
     }
   }
 
