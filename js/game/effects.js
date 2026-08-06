@@ -53,6 +53,14 @@ export class EffectManager {
     });
   }
 
+  /** 陨石撞击特效（大招） */
+  spawnMeteor(x, y, radius) {
+    this.effects.push({
+      kind: 'meteor', x, y, radius, color: '#ff6020',
+      life: 0.5, maxLife: 0.5,
+    });
+  }
+
   update(dt) {
     for (const e of this.effects) {
       e.life -= dt;
@@ -102,6 +110,24 @@ export class EffectManager {
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(e.x, e.y, r, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (e.kind === 'meteor') {
+        // 陨石撞击：多层扩散环 + 火光填充
+        const r = e.radius * (1 - t * 0.5);
+        const r2 = e.radius * 0.5 * (1 - t * 0.3);
+        ctx.fillStyle = `rgba(255,96,32,${0.3 * t})`;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = `rgba(255,160,60,${t})`;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = `rgba(255,220,100,${t * 0.8})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, r2, 0, Math.PI * 2);
         ctx.stroke();
       }
       ctx.restore();

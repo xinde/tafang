@@ -255,6 +255,8 @@ export class WaveManager {
         economy.earn(m.reward);
         killCount++;
         if (effects) effects.spawnDeath(m.x, m.y, m.color);
+        // 大招充能
+        if (this._onKill) this._onKill(m);
         this.active.splice(i, 1);
       }
     }
@@ -289,5 +291,10 @@ export class WaveManager {
 
   getActive() {
     return this.active;
+  }
+
+  /** 设置击杀回调（大招充能用） */
+  setOnKill(fn) {
+    this._onKill = fn;
   }
 }

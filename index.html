@@ -40,6 +40,20 @@
         </div>
         <div id="hud-actions">
           <button id="btn-next-wave">开始下一波</button>
+          <div id="ultimate-bar">
+            <button id="btn-ult-meteor" class="ult-btn" data-ult="meteor" title="陨石雨（Q）" disabled>
+              <span class="ult-icon">☄️</span>
+              <span class="ult-energy-bar"><span class="ult-energy-fill"></span></span>
+            </button>
+            <button id="btn-ult-freeze" class="ult-btn" data-ult="freeze" title="全图冰冻（W）" disabled>
+              <span class="ult-icon">❄️</span>
+              <span class="ult-energy-bar"><span class="ult-energy-fill"></span></span>
+            </button>
+            <button id="btn-ult-gold" class="ult-btn" data-ult="gold_rush" title="金币狂暴（E）" disabled>
+              <span class="ult-icon">💰</span>
+              <span class="ult-energy-bar"><span class="ult-energy-fill"></span></span>
+            </button>
+          </div>
           <button id="btn-sell" class="sell-btn" aria-pressed="false" title="出售模式：长按士兵出售（移动端）">出售</button>
           <button id="btn-panel" class="panel-toggle" title="切换面板">面板</button>
           <button id="btn-mute" class="mute-btn" aria-pressed="false" title="开关音效">静音</button>
@@ -131,6 +145,9 @@
     <div id="mobile-bar" class="mobile-bar">
       <div class="mobile-weapon-bar" id="mobile-weapon-bar"></div>
       <div class="mobile-action-bar">
+        <button id="btn-ult-meteor-m" class="mb-btn mb-ult" data-ult="meteor" title="陨石雨" disabled>☄️</button>
+        <button id="btn-ult-freeze-m" class="mb-btn mb-ult" data-ult="freeze" title="冰冻" disabled>❄️</button>
+        <button id="btn-ult-gold-m" class="mb-btn mb-ult" data-ult="gold_rush" title="金币" disabled>💰</button>
         <button id="btn-next-wave-m" class="mb-btn mb-wave">开始</button>
         <button id="btn-sell-m" class="mb-btn mb-sell">出售</button>
         <button id="btn-panel-m" class="mb-btn mb-panel">升级</button>

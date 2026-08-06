@@ -14,6 +14,7 @@ import { WEAPONS, WeaponType } from './game/weapon.js';
 import { UpgradeManager, UPGRADE_KEYS, UPGRADE_DEFS } from './game/upgrade.js';
 import { QuizBank, QuizGate } from './game/quiz.js';
 import { WeatherManager, WeatherFX } from './game/weather.js';
+import { UltimateManager, UltimateType, ULTIMATE_DEFS } from './game/ultimate.js';
 import waveConfig from '../config/waves.json' with { type: 'json' };
 import quizConfig from '../config/quiz.json' with { type: 'json' };
 import weatherConfig from '../config/weather.json' with { type: 'json' };
@@ -36,10 +37,24 @@ const map = new GameMap(_mapConfig);
 const economy = new Economy();
 const soldiers = new SoldierManager();
 const waves = new WaveManager(map, waveConfig, { soldiers }); // combat 上下文：远程敌人可攻击防御塔
+waves.setOnKill((m) => {
+  // BOSS 击杀充能更多
+  ultimate.onKill(m.key === 'boss');
+  // 金币狂暴：击杀奖励翻倍（额外补发一倍）
+  if (ultimate.isGoldRushActive) {
+    economy.earn(m.reward);
+  }
+});
 const projectiles = new ProjectileManager();
 const effects = new EffectManager();
 const upgrades = new UpgradeManager();
 const input = new Input(canvas, grid);
+
+// ---------- 大招系统 ----------
+const ultimate = new UltimateManager();
+const ultBar = document.getElementById('ultimate-bar');
+const ultButtons = document.querySelectorAll('.ult-btn');
+const ultButtonsM = document.querySelectorAll('.mb-ult');
 
 // ---------- 天气系统 ----------
 const weather = new WeatherManager(weatherConfig);
@@ -220,6 +235,41 @@ function refreshMuteBtn() {
   btnMute.classList.toggle('muted', audio.muted);
 }
 refreshMuteBtn();
+
+// ---------- 大招按钮 ----------
+function refreshUltimateHud() {
+  const ratio = ultimate.energyRatio;
+  const ready = ultimate.isReady;
+  const activeType = ultimate.activeUltimate;
+  for (const btn of ultButtons) {
+    const type = btn.dataset.ult;
+    const fill = btn.querySelector('.ult-energy-fill');
+    if (fill) fill.style.width = `${ratio * 100}%`;
+    btn.classList.toggle('is-ready', ready);
+    btn.classList.toggle('is-active', activeType === type);
+    btn.disabled = !ready;
+  }
+  for (const btn of ultButtonsM) {
+    btn.disabled = !ready;
+    btn.classList.toggle('is-ready', ready);
+  }
+}
+ultimate.onChange(refreshUltimateHud);
+refreshUltimateHud();
+
+function tryActivateUltimate(type) {
+  if (gameOver || paused) return;
+  if (ultimate.activate(type)) {
+    audio.play('upgrade');
+    if (navigator.vibrate) navigator.vibrate(30);
+  }
+}
+for (const btn of ultButtons) {
+  btn.addEventListener('click', () => tryActivateUltimate(btn.dataset.ult));
+}
+for (const btn of ultButtonsM) {
+  btn.addEventListener('click', () => tryActivateUltimate(btn.dataset.ult));
+}
 
 function formatWeaponRange(range) {
   const cells = range / CONFIG.CELL_SIZE;
@@ -439,6 +489,10 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   if (weaponKeys[e.key]) selectWeapon(weaponKeys[e.key]);
+  // 大招快捷键
+  const ultKeys = { q: 'meteor', w: 'freeze', e: 'gold_rush' };
+  const ultType = ultKeys[e.key.toLowerCase()];
+  if (ultType) tryActivateUltimate(ultType);
 });
 
 // ---------- 升级购买（答题门禁） ----------
@@ -770,6 +824,20 @@ function update(dt) {
   // projectiles 供远程敌人（法师/BOSS）开火入队；天气影响怪物移动速度
   waves.update(dt, economy, effects, projectiles, weather.modifiers.monsterSpeedMul);
 
+  // 波间结束金币狂暴
+  if (!waves.isWaveInProgress() && waves.waveIndex > 0) {
+    ultimate.endGoldRush();
+  }
+
+  // 大招系统推进
+  ultimate.update(dt, {
+    monsters: waves.getActive(),
+    effects,
+    economy,
+    canvasW: CANVAS_WIDTH,
+    canvasH: CANVAS_HEIGHT,
+  });
+
   if (economy.isGameOver()) {
     gameOver = true;
     victory = false;
@@ -829,6 +897,31 @@ function render() {
   // 天气视觉特效（风线/雨滴/雪花，画在游戏内容之上、覆盖层之下）
   weatherFX.draw(ctx, CANVAS_WIDTH, CANVAS_HEIGHT, CONFIG.FIXED_DT, weather.currentWeather);
 
+  // 大招全屏特效
+  if (ultimate.isFreezeActive) {
+    // 冰冻：全屏淡蓝覆盖
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = `rgba(80,160,255,${0.12 + 0.04 * Math.sin(performance.now() / 200)})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+  } else if (ultimate.isMeteorActive) {
+    // 陨石雨：全屏淡红闪烁
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = `rgba(255,80,20,${0.08 + 0.05 * Math.sin(performance.now() / 100)})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+  } else if (ultimate.isGoldRushActive) {
+    // 金币狂暴：全屏淡金边框
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.strokeStyle = `rgba(255,208,64,${0.3 + 0.2 * Math.sin(performance.now() / 300)})`;
+    ctx.lineWidth = 6;
+    ctx.strokeRect(3, 3, canvas.width - 6, canvas.height - 6);
+    ctx.restore();
+  }
+
   // 注入吸格目标：已放置士兵的格子（触摸时吸附，方便点中）
   input.setSnapTargets(soldiers.getAll().map((s) => ({ col: s.col, row: s.row })));
 
@@ -868,4 +961,4 @@ const loop = new GameLoop({ update, render });
 loop.start();
 
 // 暴露给调试/并行开发（可选）
-window.__game = { map, economy, soldiers, waves, projectiles, effects, upgrades, renderer, WEAPONS };
+window.__game = { map, economy, soldiers, waves, projectiles, effects, upgrades, ultimate, renderer, WEAPONS };
