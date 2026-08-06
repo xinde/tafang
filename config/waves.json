@@ -25,7 +25,7 @@
   "growth": {
     "baseCount": 5,
     "countPerWave": 2,
-    "hpScalePerWave": 0.30,
+    "hpScalePerWave": 0.22,
     "speedScalePerWave": 0.06,
     "speedScaleCap": 0.7,
     "rewardBonusEveryWaves": 2,

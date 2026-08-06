@@ -37,9 +37,9 @@ export const MonsterType = {
     fireSfx: 'fire_arrow',
     hitSfx: 'hit_arrow',
   } },
-  BOSS:    { key: 'boss',    hp: 420, speed: 38,  reward: 50, radius: 0.52, color: '#b02030', armor: 8, ranged: {
+  BOSS:    { key: 'boss',    hp: 260, speed: 34,  reward: 60, radius: 0.52, color: '#b02030', armor: 5, ranged: {
     range: 320,          // 攻击射程（像素）
-    damage: 20,          // 单发弹道伤害（对塔 / 对基地）
+    damage: 18,          // 单发弹道伤害（对塔 / 对基地）
     fireRate: 0.6,       // 每秒攻击次数
     projectileSpeed: 260,
     projColor: '#ff8030',
