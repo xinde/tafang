@@ -9,9 +9,9 @@ import { assets } from './engine/assets.js';
 import { GameMap } from './game/map.js?v=tactics';
 import { StageRotation } from './game/stage-rotation.js?v=tactics';
 import { Economy } from './game/economy.js?v=music-repair';
-import { Soldier, SoldierManager } from './game/soldier.js?v=tactics';
-import { WaveManager, campaignWaves } from './game/wave.js?v=tactics';
-import { ProjectileManager } from './game/projectile.js?v=tactics';
+import { Soldier, SoldierManager } from './game/soldier.js?v=pad-fix';
+import { WaveManager, campaignWaves } from './game/wave.js?v=pad-fix';
+import { ProjectileManager } from './game/projectile.js?v=pad-fix';
 import { EffectManager } from './game/effects.js?v=music-repair';
 import { WEAPONS, WeaponType } from './game/weapon.js';
 import { UpgradeManager, UPGRADE_DEFS } from './game/upgrade.js';
@@ -487,10 +487,10 @@ function render() {
     if (s.hp < s.maxHp) renderer.drawHealthBar(s.x, s.y - 27, 33, s.hpRatio);
   }
   for (const m of waves.getActive()) {
-    renderer.drawMonster(m.x, m.y, CONFIG.CELL_SIZE * m.radius, {
+    renderer.drawMonster(m.x, m.y, m.radiusPx, {
       image: assets.get('monster_' + m.key), color: m.color, slowed: m.isSlowed, distance: m.dist,
     });
-    if (m.hp < m.maxHp || m.key === 'boss') renderer.drawHealthBar(m.x, m.y - CONFIG.CELL_SIZE * m.radius * 1.35, 30, m.hpRatio, '#efab77');
+    if (m.hp < m.maxHp || m.key === 'boss') renderer.drawHealthBar(m.x, m.y - m.radiusPx * 1.35, 30, m.hpRatio, '#efab77');
   }
   for (const p of projectiles.getAll()) {
     renderer.drawLine(p.x, p.y, p.x - (p._tx - p.x) * .08, p.y - (p._ty - p.y) * .08, p.color, 2);
