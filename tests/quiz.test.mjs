@@ -75,6 +75,17 @@ test('抽题：单题池回退不挂死', () => {
   assert.equal(q2.q, '唯一题', '单题池允许重复且不挂死');
 });
 
+test('换轮后，即使随机数再次指向上一轮末题，也先出另一道题', (t) => {
+  const questions = ['第一题', '第二题'].map(q => ({ q, options: ['甲', '乙'], answer: 0 }));
+  const bank = new QuizBank({ groups: [{ timeLimit: 20, questions }] });
+  t.mock.method(Math, 'random', () => 0.99);
+  assert.equal(bank.drawQuestion().q, '第二题');
+  assert.equal(bank.drawQuestion().q, '第一题');
+  Math.random.mock.mockImplementation(() => 0);
+  assert.equal(bank.drawQuestion().q, '第二题');
+  assert.equal(bank.drawQuestion().q, '第一题');
+});
+
 // ---------- 判定 ----------
 test('判定：答对/答错/越界索引', () => {
   const bank = new QuizBank(quizConfig);
@@ -212,13 +223,19 @@ test('门禁：答题结束后 buy 失败（答对但金币被外部扣光）不
 });
 
 // ---------- 配置文档字段不影响解析 ----------
-test('题库内容合法：全部题目字段齐备', () => {
-  const bank = new QuizBank(quizConfig);
-  for (const g of bank.groups) {
-    assert.ok(g.timeLimit > 0, `组 ${g.name} 应有限时`);
-    for (const q of g.questions) {
-      assert.equal(q.options.length, 4, `题干 "${q.q}" 应有 4 个选项`);
-      assert.ok(q.q.includes('？') || q.q.includes('？') || q.q.length > 4, `题干应完整（"${q.q}"）`);
+test('发布题库为纯文字四选一，题干和每题选项互不重复', () => {
+  const seen = new Set();
+  for (const { questions } of quizConfig.groups) {
+    for (const { q, options } of questions) {
+      assert.equal(options.length, 4, q);
+      for (const value of [q, ...options]) {
+        assert.equal(typeof value, 'string', q);
+        assert.ok(value.trim(), q);
+        assert.doesNotMatch(value, /https?:\/\/|data:image\/|<img\b|!\[.*?\]\(/i, q);
+      }
+      assert.equal(new Set(options.map(s => s.trim())).size, 4, q);
+      assert.ok(!seen.has(q.trim()), q);
+      seen.add(q.trim());
     }
   }
 });
