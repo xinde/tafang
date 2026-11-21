@@ -1,5 +1,4 @@
-import { GameMap } from './game/map.js';
-import { paintTerrain } from './engine/terrain.js';
+import { paintRoutePreview } from './engine/terrain.js?v=12maps';
 import { UPGRADE_DEFS, UPGRADE_KEYS } from './game/upgrade.js';
 
 const byId = id => document.getElementById(id);
@@ -26,12 +25,12 @@ function enterStage(stage) {
   else location.assign(url.href);
 }
 
-export function initCampaign(stages, stage, hasProgress) {
+export function initCampaign(stages, stage, hasProgress, drawRandom) {
   const index = stages.indexOf(stage);
   let chosen = index;
   let returnToResult = false;
-  document.body.dataset.biome = stage.biome;
-  byId('chapter-number').textContent = '战役 ' + String(index + 1).padStart(2, '0') + ' / ' + String(stages.length).padStart(2, '0');
+  byId('stage-landscape').src = stage.landscape;
+  byId('chapter-number').textContent = '地图 ' + String(index + 1).padStart(2, '0') + ' / ' + String(stages.length).padStart(2, '0');
   byId('stage-title').textContent = stage.title;
   byId('stage-difficulty').textContent = stage.difficulty;
   byId('stage-desc').textContent = stage.desc;
@@ -53,7 +52,7 @@ export function initCampaign(stages, stage, hasProgress) {
       stages.forEach((entry, i) => {
         const button = document.createElement('button');
         button.className = 'stage-choice';
-        const preview = paintTerrain(new GameMap(entry), entry);
+        const preview = paintRoutePreview(entry);
         preview.setAttribute('aria-hidden', 'true');
         const text = document.createElement('span');
         text.innerHTML = '<b>' + String(i + 1).padStart(2, '0') + '　' + entry.title + '</b><small>' +
@@ -67,10 +66,12 @@ export function initCampaign(stages, stage, hasProgress) {
     }
     refreshChoice();
     campaignDialog.showModal();
+    list.children[chosen].scrollIntoView({block:'nearest'});
   }
   byId('btn-campaign').addEventListener('click', openMap);
   byId('btn-guide').addEventListener('click', () => guideDialog.showModal());
   byId('enter-stage').addEventListener('click', () => enterStage(stages[chosen]));
+  byId('random-stage').addEventListener('click', () => enterStage(drawRandom()));
   document.querySelectorAll('[data-close]').forEach(button =>
     button.addEventListener('click', () => button.closest('dialog').close()));
   byId('btn-restart').addEventListener('click', () => enterStage(stage));
@@ -94,7 +95,7 @@ export function initCampaign(stages, stage, hasProgress) {
     }
   });
   byId('btn-continue').addEventListener('click', () => {
-    if (scoreDialog.dataset.win === 'true' && stages[index + 1]) enterStage(stages[index + 1]);
+    if (scoreDialog.dataset.win === 'true') enterStage(drawRandom());
     else { returnToResult = true; scoreDialog.close(); openMap(); }
   });
 
@@ -120,7 +121,7 @@ export function initCampaign(stages, stage, hasProgress) {
     byId('score-gold').textContent = gold;
     byId('score-towers').textContent = towerCount;
     scoreDialog.dataset.win = String(won);
-    byId('btn-continue').textContent = won && stages[index + 1] ? '下一关' : '战役地图';
+    byId('btn-continue').textContent = won ? '随机下一关' : '战役地图';
     report = ['余烬守卫 · ' + stage.title, byId('overlay-title').textContent + ' · ' + grade,
       '波次 ' + wave + '　耐久 ' + lives, '金币 ' + gold + '　守卫 ' + towerCount].join('\n');
     scoreDialog.showModal();

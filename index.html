@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#162020">
   <title>余烬守卫 · Emberwatch</title>
   <link rel="icon" href="assets/img/base.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=12maps">
 </head>
 <body>
   <header class="mast">
@@ -22,6 +22,7 @@
 
   <main class="command-room">
     <section class="stage-banner" aria-labelledby="stage-title">
+      <img id="stage-landscape" class="stage-landscape" alt="" decoding="async">
       <div class="banner-copy">
         <p class="chapter-line"><svg class="icon"><use href="assets/img/icons.svg#flag"/></svg><span id="chapter-number"></span><span class="chapter-line-rule"></span><span id="stage-difficulty"></span></p>
         <h1 id="stage-title"></h1>
@@ -86,11 +87,15 @@
   <dialog id="campaign-dialog" aria-labelledby="campaign-title">
     <div class="dialog-head"><h2 id="campaign-title">战役地图</h2><button class="icon-button" data-close aria-label="关闭地图"><svg class="icon"><use href="assets/img/icons.svg#close"/></svg></button></div>
     <div id="stage-list"></div>
-    <div class="dialog-actions"><p id="campaign-note"></p><button id="enter-stage" class="primary">进入关卡</button></div>
+    <div class="dialog-actions">
+      <p id="campaign-note"></p>
+      <div class="stage-actions"><button id="random-stage" class="small-button">随机换一关</button><button id="enter-stage" class="primary">进入关卡</button></div>
+    </div>
   </dialog>
   <dialog id="guide-dialog" aria-labelledby="guide-title">
     <div class="dialog-head"><h2 id="guide-title">玩法手册</h2><button class="icon-button" data-close aria-label="关闭手册"><svg class="icon"><use href="assets/img/icons.svg#close"/></svg></button></div>
     <dl class="guide">
+      <dt>随机或指定战场</dt><dd>从游戏首页进入会随机抽图，同一标签页一轮内不重复。想换地形，可在「战役地图」点「随机换一关」或自己挑选。结算后可以重试同一关。</dd>
       <dt>守住旗帜</dt><dd>敌人从红旗进入，沿土路进攻城堡。漏敌会损失耐久，撑过最后一波即获胜。</dd>
       <dt>在石台上布防</dt><dd>选择守卫，再点带加号的石台。弩手适合弯道，重炮擅长对付密集敌群。触屏按住空石台可预览射程，松手部署。</dd>
       <dt>利用整备时间</dt><dd>迎战前可以查看敌群编成。两波之间提前迎战，按剩余时间奖励最多 8 金币。</dd>
@@ -112,6 +117,6 @@
     </div>
     <div class="result-actions"><button id="btn-share" class="small-button">复制战绩</button><button id="btn-restart" class="small-button">重试本关</button><button id="btn-continue" class="primary">下一关</button></div>
   </dialog>
-  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/main.js?v=12maps"></script>
 </body>
 </html>

@@ -1,11 +1,12 @@
 import { CONFIG, CANVAS_WIDTH, CANVAS_HEIGHT } from './config.js';
 import { GameLoop } from './engine/loop.js';
-import { Renderer } from './engine/renderer.js';
-import { paintTerrain } from './engine/terrain.js';
+import { Renderer } from './engine/renderer.js?v=12maps';
+import { paintTerrain } from './engine/terrain.js?v=12maps';
 import { Input } from './engine/input.js';
 import { audio } from './engine/audio.js';
 import { assets } from './engine/assets.js';
-import { GameMap } from './game/map.js';
+import { GameMap } from './game/map.js?v=12maps';
+import { StageRotation } from './game/stage-rotation.js';
 import { Economy } from './game/economy.js';
 import { Soldier, SoldierManager } from './game/soldier.js';
 import { WaveManager, campaignWaves } from './game/wave.js';
@@ -16,11 +17,12 @@ import { UpgradeManager, UPGRADE_DEFS } from './game/upgrade.js';
 import { QuizBank, QuizGate } from './game/quiz.js';
 import { WeatherManager, WeatherFX } from './game/weather.js';
 import { UltimateManager, ULTIMATE_DEFS } from './game/ultimate.js';
-import { initCampaign, campaignDialog, guideDialog } from './campaign.js';
+import { initCampaign, campaignDialog, guideDialog } from './campaign.js?v=12maps';
 
 const byId = id => document.getElementById(id);
 async function loadConfig(name) {
   const url = new URL('../config/' + name + '.json', import.meta.url);
+  if (name === 'maps' || name === 'waves') url.search = new URL(import.meta.url).search;
   const response = await fetch(url);
   if (!response.ok) throw new Error(name + '.json HTTP ' + response.status);
   return response.json();
@@ -33,7 +35,10 @@ const [waveConfig, quizConfig, weatherConfig, mapsConfig] = await Promise.all(
 });
 const icon = key => '<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#' + key + '"/></svg>';
 const selectedId = new URLSearchParams(location.search).get('stage');
-const stage = mapsConfig.maps.find(entry => entry.id === selectedId) || mapsConfig.maps[0];
+let stageStorage;
+try { stageStorage = window.sessionStorage; } catch { /* 部分浏览器会拒绝访问会话存储 */ }
+const rotation = new StageRotation(mapsConfig.maps, stageStorage);
+const stage = rotation.select(selectedId);
 const map = new GameMap(stage);
 const terrain = paintTerrain(map, stage);
 const economy = new Economy(stage);
@@ -61,7 +66,8 @@ let sellMode = false;
 let manualPause = false;
 let speed = 1;
 let gameOver = false;
-const showResult = initCampaign(mapsConfig.maps, stage, () => waves.waveIndex > 0 || soldiers.getAll().length > 0);
+const showResult = initCampaign(mapsConfig.maps, stage, () => waves.waveIndex > 0 || soldiers.getAll().length > 0,
+  () => rotation.select());
 
 function resizeCanvas() {
   const rect = canvas.getBoundingClientRect();

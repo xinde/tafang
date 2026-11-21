@@ -60,7 +60,10 @@ export class Renderer {
     const { ctx, cellSize } = this;
     const { x, y } = this.cellToPx(col, row);
     if (opts.image) {
-      ctx.drawImage(opts.image, x - 6, y - 15, cellSize + 12, cellSize + 12);
+      const size = cellSize + 12;
+      const left = Math.max(0, Math.min(this.width - size, x - 6));
+      const top = Math.max(0, Math.min(this.height - size, y - 15));
+      ctx.drawImage(opts.image, left, top, size, size);
       return;
     }
     const pad = cellSize * 0.1;

@@ -4,18 +4,28 @@
 
 一款复古像素塔防游戏。敌人从红旗出发，沿土路攻向城堡。你可以先看下一波的敌人，再决定把金币花在新守卫、全局强化，还是留到下一波。
 
-## 从苔桥前哨开始
+## 开局与换关
+
+打开试玩首页会从 **12 张地图**里随机抽一张。同一浏览器标签页会记住本轮已经出现的地图，抽完一轮再洗牌。通关后点「随机下一关」继续，想自己挑场景可打开「战役地图」。重试会保留原地图。要分享指定关卡，可以复制下表中的链接。
 
 1. 在「部署守卫」选弩手，点弯道内侧带加号的石台。一座塔就能照顾两段路。手机按住空石台可以预览射程，松手部署。
 2. 点「开始第 1 波」。击败敌人会获得金币和技能能量。两波之间可以整备，也可以提前迎战，最多多拿 8 金币。
 3. 想提高全队攻击力、攻速或射程时，打开「全局强化」。城堡还有耐久并守住最后一波，就能进入下一关。
 
-| 战役 | 波数 | 布防思路 |
+| 战役（点击直达） | 波数 | 布防思路 |
 | --- | ---: | --- |
-| 苔桥前哨 | 5 | 在桥头和折角练习布塔，留意首领前面的护卫。 |
-| 琥珀回廊 | 6 | 路线两次折返，让重炮或雷塔同时覆盖相邻路段。 |
-| 霜隙古道 | 7 | 快狼到城门的路很短。用霜晶减速，把穿甲弩留给铁卫。 |
-| 烬火要塞 | 8 | 前排会遭到远程反击，最后一波有两名领主先后进场。 |
+| [苔桥前哨](https://xinde.github.io/tafang/?stage=moss) | 5 | 在桥头与折角练习布塔。 |
+| [风车麦田](https://xinde.github.io/tafang/?stage=mill) | 5 | 弩手守麦垄内弯，重炮守长直道。 |
+| [潮汐灯港](https://xinde.github.io/tafang/?stage=tide) | 5 | 在浅滩拦住快狼，保留灯塔前的补防点。 |
+| [琥珀回廊](https://xinde.github.io/tafang/?stage=amber) | 6 | 用重炮或雷塔覆盖两段折返路。 |
+| [萤火湿地](https://xinde.github.io/tafang/?stage=fen) | 6 | 雷塔清理蝠群，后排守卫对付巫师。 |
+| [翠竹山径](https://xinde.github.io/tafang/?stage=bamboo) | 6 | 在竹溪转角布置重炮，掩护前排。 |
+| [霜隙古道](https://xinde.github.io/tafang/?stage=frost) | 7 | 霜晶拦快狼，穿甲弩对付铁卫。 |
+| [赤砂驿道](https://xinde.github.io/tafang/?stage=dunes) | 7 | 减速领头的重甲，截住后面的快狼。 |
+| [紫晶矿脉](https://xinde.github.io/tafang/?stage=quartz) | 7 | 在矿道内环部署能多次命中同一敌人的穿甲弩。 |
+| [烬火要塞](https://xinde.github.io/tafang/?stage=cinder) | 8 | 前排会遭到反击，末波有两名领主。 |
+| [云崖栈桥](https://xinde.github.io/tafang/?stage=cliff) | 8 | 守住跨云谷的两个折口，给蝠群留一座雷塔。 |
+| [月蚀遗庭](https://xinde.github.io/tafang/?stage=moon) | 8 | 在两段长廊分开布防，为第二名领主留好技能。 |
 
 手机长按已部署的守卫，或开启「出售守卫」后点它，可收回一半造价。电脑可用数字键 `1` 至 `7` 选守卫，`Q`、`W`、`E` 释放技能，`P` 暂停。战役地图会显示当前浏览器保存的各关最佳通关评级。
 
@@ -27,10 +37,10 @@
 
 ## 本地试玩
 
-线上游戏由 `gh-pages` 分支发布。要在本机运行同一版本，只需要 Git 和 Python 3。
+游戏源码和测试在 `main`，线上版本从 `gh-pages` 发布。在本机试玩只需要 Git 和 Python 3。
 
 ```sh
-git clone --branch gh-pages --single-branch https://github.com/xinde/tafang.git tafang-play
+git clone https://github.com/xinde/tafang.git tafang-play
 cd tafang-play
 python3 -m http.server 4178 --bind 127.0.0.1
 ```
