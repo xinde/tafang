@@ -157,6 +157,24 @@ export class GameMap {
     return this._pathTotalLength;
   }
 
+  /** 各横竖路段与实际圆形射程的交集，坐标与守卫索敌使用相同的像素空间。 */
+  coveredRoad(col, row, range) {
+    const x = (col + .5) * this.cellSize, y = (row + .5) * this.cellSize;
+    const parts = [];
+    for (let i = 1; i < this._pathPixels.length; i++) {
+      const a = this._pathPixels[i - 1], b = this._pathPixels[i];
+      const horizontal = a.y === b.y;
+      const gap = horizontal ? y - a.y : x - a.x;
+      if (Math.abs(gap) > range) continue;
+      const reach = Math.sqrt(Math.max(0, range * range - gap * gap));
+      const center = horizontal ? x : y, from = horizontal ? a.x : a.y, to = horizontal ? b.x : b.y;
+      const lo = Math.max(0, Math.min(from, to), center - reach);
+      const hi = Math.min((horizontal ? this.cols : this.rows) * this.cellSize, Math.max(from, to), center + reach);
+      if (lo <= hi) parts.push(horizontal ? [lo, a.y, hi, a.y] : [a.x, lo, a.x, hi]);
+    }
+    return parts;
+  }
+
   /**
    * 按行进距离返回路径上的位置与朝向。
    * monster 移动核心：dist 为已走过的像素距离。

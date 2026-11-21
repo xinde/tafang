@@ -1,5 +1,5 @@
 import { CONFIG } from '../config.js';
-import { Projectile } from './projectile.js';
+import { Projectile } from './projectile.js?v=tactics';
 
 /**
  * 怪兽类型模板。每种类型决定基础血量/速度/金币奖励/体型/颜色/护甲。
@@ -85,6 +85,7 @@ export class Monster {
     this.alive = true;
     this.reachedBase = false;
     this.slowTimer = 0;                     // 剩余减速时长（秒），>0 时按 slowFactor 减速
+    this.freezeTimer = 0;                   // 技能冰冻与霜晶减速独立结算
     this.slowFactor = 1;                    // 减速比例（0..1），1 = 无减速
     this._attackTimer = 0;                  // 远程攻击冷却
     const p = map.getPathPosition(0);
@@ -167,9 +168,11 @@ export class Monster {
    */
   update(dt, { speedMul = 1 } = {}) {
     if (!this.alive) return;
-    if (this.slowTimer > 0) this.slowTimer -= dt; // 减速计时持续流逝
+    this.freezeTimer = Math.max(0, this.freezeTimer - dt);
+    if (this.slowTimer > 0) this.slowTimer -= dt;
     let speed = this.speed * speedMul;
-    if (this.slowTimer > 0) speed *= this.slowFactor;
+    if (this.freezeTimer > 0) speed = 0;
+    else if (this.slowTimer > 0) speed *= this.slowFactor;
     this.dist += speed * dt;
     const p = this.map.getPathPosition(this.dist);
     this.x = p.x;
@@ -187,13 +190,24 @@ export class Monster {
    */
   applySlow(factor, duration) {
     if (!this.alive) return;
+    if (factor === 0) {
+      this.freezeTimer = Math.max(this.freezeTimer, duration);
+      return;
+    }
     if (this.slowTimer <= 0 || factor < this.slowFactor) this.slowFactor = factor;
     this.slowTimer = Math.max(this.slowTimer, duration);
   }
 
   /** 当前是否处于减速状态（可供渲染加特效） */
   get isSlowed() {
-    return this.alive && this.slowTimer > 0;
+    return this.alive && (this.slowTimer > 0 || this.freezeTimer > 0);
+  }
+
+  consumeFrost() {
+    if (!this.alive || this.slowTimer <= 0 || this.slowFactor >= 1) return false;
+    this.slowTimer = 0;
+    this.slowFactor = 1;
+    return true;
   }
 
   /**

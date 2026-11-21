@@ -7,6 +7,7 @@
  * 命中时按 weaponType / hitSfx 播放对应命中音效。
  */
 import { audio } from '../engine/audio.js';
+import { TACTICS } from './tactics.js';
 
 export class Projectile {
   /**
@@ -38,6 +39,7 @@ export class Projectile {
     this.color = o.color || '#fff';
     this.radius = o.radius || 4;
     this.weaponType = o.weaponType || null;
+    this.tactic = o.tactic;
     this.hitSfx = o.hitSfx || null;
     this.source = o.source || null; // 开火者（远程敌人弹道：击杀防御塔后据此回血）
     this.alive = true;
@@ -115,16 +117,23 @@ export class Projectile {
     const hitSfx = this.hitSfx || (this.weaponType ? `hit_${this.weaponType}` : null);
     if (hitSfx) audio.play(hitSfx);
     if (this.aoe > 0) {
-      // 范围溅射：命中点周边所有怪兽
+      const shattered = this.tactic === 'shatter' && this.weaponType === 'cannon' && this.target?.consumeFrost?.();
+      const radius = this.aoe * (shattered ? TACTICS.shatter.radiusScale : 1);
       for (const m of monsters) {
         if (!m.alive) continue;
-        if (Math.hypot(m.x - this.x, m.y - this.y) <= this.aoe) this._applyHit(m, this.damage, effects);
+        if (Math.hypot(m.x - this.x, m.y - this.y) <= radius) this._applyHit(m, this.damage, effects);
       }
-      if (effects) effects.spawnBlast(this.x, this.y, this.aoe, this.color);
+      if (effects) effects.spawnBlast(this.x, this.y, radius, shattered ? '#b5efef' : this.color);
     } else {
       // 单体：只伤目标（若仍活着）
       if (this.target && this.target.alive) {
-        this._applyHit(this.target, this.damage, effects);
+        const damage = this.tactic === 'volley' && this.weaponType === 'arrow' && this.source?.volleyDamage
+          ? this.source.volleyDamage(this.target, this.damage) : this.damage;
+        if (damage > this.damage) {
+          this.color = '#ffe3a1';
+          effects?.spawnBlast(this.target.x, this.target.y, 14, this.color);
+        }
+        this._applyHit(this.target, damage, effects);
         this._chainFrom(monsters, this.target, effects);
       }
     }

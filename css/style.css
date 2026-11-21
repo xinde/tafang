@@ -153,6 +153,38 @@ kbd { color: var(--amber); font-family: var(--mono); }
 .quiz-opt { background: var(--deep); border: 1px solid var(--line); padding: 9px 12px; text-align: left; }
 .is-correct { color: #bde9ad; }
 .is-wrong,.is-low { color: var(--red) !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.setting-line { display: flex; align-items: center; justify-content: space-between; gap: 9px; color: var(--muted); font-size: 13px; }
+.setting-line select { min-height: 34px; padding: 3px 6px; font: inherit; color: var(--text); background: var(--deep); border: 1px solid var(--line); }
+.setting-line select:focus-visible { outline: 2px solid var(--brass); }
+#campaign-dialog .setting-line { margin-left: auto; }
+.challenge-line,.tactic-badge { color: var(--brass); font-size: 12px; line-height: 1.45; }
+.challenge-line { margin: 7px 1px 0; }
+.challenge-line.challenge-missed { color: var(--muted); }
+#score-challenge.challenge-earned,.stage-record .stage-honor { color: var(--amber); }
+.tactic-badge { margin: 0 0 9px; }
+.stage-honor { color: var(--brass); font-size: 11px; }
+#score-challenge { color: var(--brass); margin: -6px 0 14px; font-size: 13px; }
+.guard-orders,.guard-orders [role="group"] { display: flex; align-items: center; gap: 6px; }
+.guard-orders { padding: 5px 10px; border-top: 1px solid var(--line); }
+.guard-orders b { margin-right: auto; font-size: 13px; }
+.guard-orders .small-button { min-height: 34px; }
+.guard-orders .small-button[aria-pressed="true"] { border-color: var(--brass); color: var(--amber); }
+.guard-orders .icon-button { width: 30px; min-height: 32px; }
+#range-readout { color: #bee7bb; }
+#range-readout.no-range { color: var(--red); }
+.boss-alert { position: absolute; top: 7px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; align-items: center; padding: 4px 10px; background: #262a2e; border: 1px solid #f2b18c; color: #ffe2ae; pointer-events: none; white-space: nowrap; font-size: 13px; }
+#boss-countdown { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+#interrupt-strike { pointer-events: auto; color: #c5f4ee; border-color: #658c88; min-height: 32px; }
+#tactic-instructions,#quiz-explanation { color: var(--muted); font-size: 14px; margin-bottom: 12px; }
+#tactic-options { display: grid; gap: 8px; }
+.tactic-card { display: grid; grid-template-columns: 34px 1fr; align-items: center; gap: 10px; padding: 12px; background: var(--deep); border: 1px solid var(--line); text-align: left; }
+.tactic-card .icon { width: 22px; height: 22px; margin: auto; color: var(--brass); }
+.tactic-card strong,.tactic-card small { display: block; }
+.tactic-card small { color: var(--muted); font-weight: 400; margin-top: 3px; line-height: 1.45; }
+.tactic-card:is(:focus-visible,:hover) { border-color: var(--brass); background: var(--raised); }
+#quiz-review { border-top: 1px solid var(--line); padding-top: 10px; }
+#quiz-review .dialog-actions { justify-content: flex-end; gap: 8px; }
 #score-medal { display: grid; place-items: center; width: 58px; height: 58px; background: #424337; border: 2px solid var(--brass); color: var(--amber); font: 800 30px/1 var(--mono); }
 #overlay-sub { margin: 16px 0; }
 .score-grid { display: grid; grid-template-columns: repeat(4,1fr); background: var(--deep); border-block: 1px solid var(--line); padding: 13px 0; }
@@ -211,6 +243,10 @@ kbd { color: var(--amber); font-family: var(--mono); }
   .arsenal-heading { margin: 0; gap: 5px; } .arsenal-heading h2 { font-size: 16px; }
   .shop-tabs { margin: 0; }
   #deploy-panel,#upgrade-panel,.sell-row,.skills { grid-column: 1 / -1; }
+  .tactic-badge { grid-column: 1 / -1; }
+  #campaign-dialog .setting-line { gap: 4px; font-size: 12px; }
+  #campaign-dialog .dialog-head { gap: 5px; }
+  #campaign-dialog .dialog-head h2 { font-size: 19px; }
   #weapon-grid { grid-template-columns: repeat(4,minmax(0,1fr)); margin-top: 6px; gap: 3px; }
   .wpn-btn { display: grid; grid-template-columns: 24px 1fr; gap: 1px 3px; min-height: 44px; padding: 3px; }
   .wpn-icon { width: 24px; height: 31px; grid-row: span 2; background: transparent; } .wpn-icon img { width: 25px; height: 25px; }
@@ -237,6 +273,10 @@ kbd { color: var(--amber); font-family: var(--mono); }
   #campaign-dialog .dialog-actions { align-items: stretch; flex-direction: column; gap: 7px; margin-top: 10px; }
   .stage-actions { justify-content: flex-end; }
   #campaign-dialog .dialog-head { margin-bottom: 6px; padding-bottom: 6px; }
+  #campaign-dialog .dialog-head { display: grid; grid-template-columns: 1fr auto; }
+  #campaign-dialog .dialog-head h2 { grid-area: 1 / 1; white-space: nowrap; }
+  #campaign-dialog .dialog-head > .icon-button { grid-area: 1 / 2; }
+  #campaign-dialog .setting-line { grid-area: 2 / 1 / 3 / 3; margin: 0; justify-content: flex-start; gap: 10px; white-space: nowrap; }
 }
 @media(max-width: 350px) {
   .audio-controls #btn-mute span { display: none; }
