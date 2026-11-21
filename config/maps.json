@@ -1,0 +1,112 @@
+{
+  "maps": [
+    {
+      "id": "moss",
+      "title": "苔桥前哨",
+      "name": "蛇形通道",
+      "difficulty": "初阵",
+      "biome": "forest",
+      "desc": "守住林间木桥。在折角内侧部署弩手，一座塔可以照顾两段路。",
+      "startGold": 115,
+      "baseLives": 20,
+      "threat": 0.88,
+      "rest": 15,
+      "river": [6, 7, 6, 7, 6],
+      "weather": ["rain", "wind"],
+      "waypoints": [
+        {"col": -1, "row": 5},
+        {"col": 4, "row": 5},
+        {"col": 4, "row": 2},
+        {"col": 9, "row": 2},
+        {"col": 9, "row": 8},
+        {"col": 14, "row": 8},
+        {"col": 14, "row": 5},
+        {"col": 18, "row": 5}
+      ],
+      "baseCell": {"col": 18, "row": 5},
+      "sites": [[2, 4], [3, 6], [5, 4], [5, 1], [8, 3], [10, 5], [8, 7], [11, 7], [13, 9], [15, 6], [16, 4]],
+      "waves": ["scouts", "runners", "swarm", "vanguard", "chieftain"]
+    },
+    {
+      "id": "amber",
+      "title": "琥珀回廊",
+      "name": "回旋弯路",
+      "difficulty": "进阶",
+      "biome": "autumn",
+      "desc": "敌群沿回廊两度折返。用重炮或雷塔覆盖相邻的两段路。",
+      "startGold": 120,
+      "baseLives": 18,
+      "threat": 1.02,
+      "rest": 12,
+      "river": [9, 10, 9, 10, 11],
+      "weather": ["wind", "rain"],
+      "waypoints": [
+        {"col": -1, "row": 5},
+        {"col": 3, "row": 5},
+        {"col": 3, "row": 1},
+        {"col": 14, "row": 1},
+        {"col": 14, "row": 6},
+        {"col": 6, "row": 6},
+        {"col": 6, "row": 10},
+        {"col": 17, "row": 10},
+        {"col": 17, "row": 4},
+        {"col": 19, "row": 4}
+      ],
+      "baseCell": {"col": 19, "row": 4},
+      "sites": [[2, 4], [4, 3], [6, 2], [10, 2], [13, 2], [15, 5], [12, 5], [9, 7], [7, 8], [10, 8], [14, 9], [16, 6], [18, 5]],
+      "waves": ["runners", "swarm", "skirmish", "stampede", "bulwark", "horde"]
+    },
+    {
+      "id": "frost",
+      "title": "霜隙古道",
+      "name": "双折捷径",
+      "difficulty": "艰难",
+      "biome": "frost",
+      "desc": "短路直通城门。寒冰塔拖慢快狼，穿甲弩留给披甲敌人。",
+      "startGold": 135,
+      "baseLives": 16,
+      "threat": 1.12,
+      "rest": 11,
+      "river": [9, 8, 9, 10, 9],
+      "weather": ["snow", "wind"],
+      "waypoints": [
+        {"col": -1, "row": 3},
+        {"col": 6, "row": 3},
+        {"col": 6, "row": 8},
+        {"col": 12, "row": 8},
+        {"col": 12, "row": 3},
+        {"col": 18, "row": 3}
+      ],
+      "baseCell": {"col": 18, "row": 3},
+      "sites": [[2, 2], [3, 4], [5, 2], [7, 4], [5, 7], [7, 7], [10, 9], [11, 7], [13, 5], [14, 2], [16, 4]],
+      "waves": ["outriders", "skirmish", "bulwark", "stampede", "hex", "ironmarch", "frostlord"]
+    },
+    {
+      "id": "cinder",
+      "title": "烬火要塞",
+      "name": "中央螺旋",
+      "difficulty": "决战",
+      "biome": "ember",
+      "desc": "敌方弓手与巫师会反击前排。让远程塔交叉掩护，留好终波技能。",
+      "startGold": 145,
+      "baseLives": 15,
+      "threat": 1.26,
+      "rest": 10,
+      "river": [7, 6, 7, 8, 7],
+      "weather": ["wind"],
+      "waypoints": [
+        {"col": -1, "row": 8},
+        {"col": 4, "row": 8},
+        {"col": 4, "row": 3},
+        {"col": 10, "row": 3},
+        {"col": 10, "row": 7},
+        {"col": 15, "row": 7},
+        {"col": 15, "row": 2},
+        {"col": 18, "row": 2}
+      ],
+      "baseCell": {"col": 18, "row": 2},
+      "sites": [[2, 7], [3, 9], [5, 6], [3, 4], [6, 4], [8, 2], [9, 4], [11, 6], [12, 8], [14, 6], [16, 4], [16, 1], [17, 3]],
+      "waves": ["outriders", "stampede", "bulwark", "hex", "siege", "ironmarch", "nightfall", "laststand"]
+    }
+  ]
+}
