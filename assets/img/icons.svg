@@ -4,6 +4,8 @@
   <symbol id="flag" viewBox="0 0 16 16"><path d="M2 1h2v14H2zM4 2h10v2h-2v2h2v2H4z"/></symbol>
   <symbol id="map" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 3h2V2h2V1h1v1h3v1h2V2h2V1h2v12h-2v1h-2v1H9v-1H6v-1H4v1H2v1H1zm2 2v7l2-1V4zm4-1v7l3 1V5zm5 1v7l1-1V4z"/></symbol>
   <symbol id="sound" viewBox="0 0 16 16"><path d="M1 6h3V5h2V3h2v10H6v-2H4v-1H1zM10 5h1v1h1v4h-1v1h-1V9h1V7h-1zM12 2h1v1h1v2h1v6h-1v2h-1v1h-1v-2h1v-2h1V6h-1V4h-1z"/></symbol>
+  <symbol id="music" viewBox="0 0 16 16"><path d="M5 3h4V2h4V1h2v10h-1v2h-3v-1h-1v-2h1V9h2V5H9v1H7v6H6v2H3v-1H2v-2h1v-1h2z"/></symbol>
+  <symbol id="music-off" viewBox="0 0 16 16"><path d="M7 2h4V1h3v4h-4v1H8v6H7v2H4v-1H3v-2h1v-1h3zM1 2h2v2h2v2H3V4H1zm4 4h2v2H5zm4 4h2v2H9zm2 2h2v2h-2zm2 2h2v2h-2z"/></symbol>
   <symbol id="mute" viewBox="0 0 16 16"><path d="M1 6h3V5h2V3h2v10H6v-2H4v-1H1zM10 5h1v1h1v1h1V6h1V5h1v2h-1v2h1v2h-1v-1h-1V9h-1v1h-1v1h-1V9h1V7h-1z"/></symbol>
   <symbol id="book" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 2h5v1h4V2h5v11h-5v1H6v-1H1zm2 2v7h3v1h1V5H6V4zm6 1v7h1v-1h3V4h-3v1z"/></symbol>
   <symbol id="sword" viewBox="0 0 16 16"><path d="M11 1h4v4h-1v1h-1v1h-1v1h-1v1h-1v1H8v1h1v2H7v-1H6v1H5v1H4v1H2v-2h1v-1h1v-1h1v-1H4V8h2v1h1V7h1V6h1V5h1V4h1z"/></symbol>

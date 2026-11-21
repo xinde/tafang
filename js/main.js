@@ -4,19 +4,20 @@ import { Renderer } from './engine/renderer.js?v=12maps';
 import { paintTerrain } from './engine/terrain.js?v=12maps';
 import { Input } from './engine/input.js';
 import { audio } from './engine/audio.js';
+import { BackgroundMusic } from './engine/music.js';
 import { assets } from './engine/assets.js';
 import { GameMap } from './game/map.js?v=12maps';
 import { StageRotation } from './game/stage-rotation.js';
-import { Economy } from './game/economy.js';
+import { Economy } from './game/economy.js?v=music-repair';
 import { Soldier, SoldierManager } from './game/soldier.js';
 import { WaveManager, campaignWaves } from './game/wave.js';
 import { ProjectileManager } from './game/projectile.js';
-import { EffectManager } from './game/effects.js';
+import { EffectManager } from './game/effects.js?v=music-repair';
 import { WEAPONS, WeaponType } from './game/weapon.js';
 import { UpgradeManager, UPGRADE_DEFS } from './game/upgrade.js';
 import { QuizBank, QuizGate } from './game/quiz.js';
 import { WeatherManager, WeatherFX } from './game/weather.js';
-import { UltimateManager, ULTIMATE_DEFS } from './game/ultimate.js';
+import { UltimateManager, UltimateType, ULTIMATE_DEFS } from './game/ultimate.js?v=music-repair';
 import { initCampaign, campaignDialog, guideDialog } from './campaign.js?v=12maps';
 
 const byId = id => document.getElementById(id);
@@ -33,7 +34,8 @@ const [waveConfig, quizConfig, weatherConfig, mapsConfig] = await Promise.all(
   byId('stage-title').textContent = '关卡未能加载，请刷新重试';
   throw error;
 });
-const icon = key => '<svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg#' + key + '"/></svg>';
+const iconSheet = 'assets/img/icons.svg?v=music#';
+const icon = key => '<svg class="icon" aria-hidden="true"><use href="' + iconSheet + key + '"/></svg>';
 const selectedId = new URLSearchParams(location.search).get('stage');
 let stageStorage;
 try { stageStorage = window.sessionStorage; } catch { /* 部分浏览器会拒绝访问会话存储 */ }
@@ -48,7 +50,7 @@ const waves = new WaveManager(map, level, { soldiers });
 const projectiles = new ProjectileManager();
 const effects = new EffectManager();
 const upgrades = new UpgradeManager();
-const ultimate = new UltimateManager();
+const ultimate = new UltimateManager({economy, soldiers, effects, basePosition: map.getPathPosition(map.getPathLength())});
 const weather = new WeatherManager({
   ...weatherConfig, weathers: weatherConfig.weathers.filter(w => stage.weather.includes(w.key)),
 });
@@ -92,24 +94,50 @@ assets.load();
 const sounds = ['fire_sword','fire_arrow','fire_cannon','fire_magic','hit_arrow','hit_cannon','hit_magic',
   'place','upgrade','sell','wave_start','kill','leak','coin','victory','gameover','button','tower_down'];
 audio.setManifest(Object.fromEntries(sounds.map(key => [key, 'assets/audio/' + key + '.wav'])));
-window.addEventListener('pointerdown', () => audio.unlock(), {once:true});
-window.addEventListener('keydown', () => audio.unlock(), {once:true});
-try { audio.setMuted(localStorage.getItem('tafang_muted') === '1'); } catch { /* 私密模式 */ }
-
-function refreshMute() {
-  const btn = byId('btn-mute');
-  btn.innerHTML = icon(audio.muted ? 'mute' : 'sound');
-  btn.setAttribute('aria-pressed', String(audio.muted));
-  btn.title = audio.muted ? '开启音效' : '静音';
-  btn.setAttribute('aria-label', btn.title);
+let musicEnabled = true;
+try {
+  audio.setMuted(localStorage.getItem('tafang_muted') === '1');
+  const saved = localStorage.getItem('emberwatch.music');
+  musicEnabled = saved === null ? !audio.muted : saved === '1';
+} catch { /* 本次游戏仍可调节声音 */ }
+const music = new BackgroundMusic(byId('background-music'), 'assets/audio/watchfire.mp3', musicEnabled);
+function syncMusicActivity() {
+  music.setActive(!document.hidden && !manualPause && !gameOver);
 }
+document.addEventListener('visibilitychange', syncMusicActivity);
+window.addEventListener('pagehide', () => music.setActive(false));
+window.addEventListener('pageshow', syncMusicActivity);
+syncMusicActivity();
+
+function unlockSound(event) {
+  if (!event.isTrusted) return;
+  if (!audio.muted) audio.unlock();
+  // 先让开关自己的 click 处理新偏好，避免首次点“关”时短暂起播。
+  if (event.type === 'click' || !event.target?.closest?.('#btn-music')) music.onGesture();
+}
+for (const event of ['click', 'keydown', 'touchend']) window.addEventListener(event, unlockSound, {passive: true});
+
+function refreshSoundButtons() {
+  const musicButton = byId('btn-music'), effectsButton = byId('btn-mute');
+  musicButton.setAttribute('aria-pressed', String(music.enabled));
+  musicButton.title = music.enabled ? '关闭背景音乐' : '开启背景音乐';
+  musicButton.querySelector('use').setAttribute('href', iconSheet + (music.enabled ? 'music' : 'music-off'));
+  effectsButton.setAttribute('aria-pressed', String(!audio.muted));
+  effectsButton.title = audio.muted ? '开启战斗音效' : '关闭战斗音效';
+  effectsButton.querySelector('use').setAttribute('href', iconSheet + (audio.muted ? 'mute' : 'sound'));
+}
+byId('btn-music').addEventListener('click', () => {
+  music.setEnabled(!music.enabled);
+  try { localStorage.setItem('emberwatch.music', music.enabled ? '1' : '0'); } catch { /* 本局偏好仍生效 */ }
+  refreshSoundButtons();
+});
 byId('btn-mute').addEventListener('click', () => {
   audio.toggleMute();
   try { localStorage.setItem('tafang_muted', audio.muted ? '1' : '0'); } catch { /* 单局偏好仍生效 */ }
-  refreshMute();
+  refreshSoundButtons();
   if (!audio.muted) audio.play('button');
 });
-refreshMute();
+refreshSoundButtons();
 
 function combinedMultipliers() {
   const up = upgrades.multipliers, wm = weather.modifiers;
@@ -280,21 +308,31 @@ for (const btn of document.querySelectorAll('.up-btn')) {
 
 const ultBar = byId('ultimate-bar');
 function tryUltimate(type) {
-  if (!fieldBlocked() && waves.isWaveInProgress() && ultimate.activate(type)) audio.play('upgrade');
+  if (fieldBlocked() || !waves.isWaveInProgress() || !ultimate.activate(type)) return;
+  audio.play('upgrade');
+  if (type === UltimateType.REPAIR) hint('抢修完成，城堡和守卫耐久已回满');
 }
 for (const def of Object.values(ULTIMATE_DEFS)) {
   const btn = document.createElement('button');
   btn.className = 'ult-btn';
   btn.dataset.ult = def.key;
   btn.title = def.name + '（' + def.hotkey + '）· ' + def.desc;
-  btn.innerHTML = ({meteor:'陨石',freeze:'冰冻',gold_rush:'淘金'})[def.key] + '<span class="skill-key">' + def.hotkey + '</span>';
+  btn.innerHTML = def.label + '<span class="skill-key">' + def.hotkey + '</span>';
+  btn.setAttribute('aria-label', btn.title);
   btn.addEventListener('click', () => tryUltimate(def.key));
   ultBar.append(btn);
 }
 function refreshUltimate() {
   byId('energy-count').textContent = ultimate.energy + ' / 100';
   byId('energy-fill').style.width = (ultimate.energyRatio * 100) + '%';
-  for (const btn of ultBar.children) btn.disabled = !ultimate.isReady || !waves.isWaveInProgress() || fieldBlocked();
+  const inBattle = waves.isWaveInProgress() && !fieldBlocked();
+  for (const btn of ultBar.children) {
+    const type = btn.dataset.ult;
+    btn.disabled = !inBattle || !ultimate.canActivate(type);
+    if (type === UltimateType.REPAIR) {
+      btn.title = inBattle && ultimate.isReady && btn.disabled ? '所有设施耐久已满，保留能量' : btn.getAttribute('aria-label');
+    }
+  }
 }
 ultimate.onChange(refreshUltimate);
 function launchWave() {
@@ -308,6 +346,7 @@ byId('btn-next-wave').addEventListener('click', launchWave);
 function togglePause() {
   if (gameOver || quizGate.isOpen || campaignDialog.open || guideDialog.open) return;
   manualPause = !manualPause;
+  syncMusicActivity();
   const btn = byId('btn-pause');
   btn.innerHTML = icon(manualPause ? 'play' : 'pause');
   btn.title = manualPause ? '继续战斗（P）' : '暂停（P）';
@@ -335,8 +374,8 @@ window.addEventListener('keydown', e => {
   if (key === 'p') return togglePause();
   if (manualPause) return;
   if (weaponOrder[Number(key) - 1]) selectWeapon(weaponOrder[Number(key) - 1]);
-  const skill = { q:'meteor', w:'freeze', e:'gold_rush' }[key];
-  if (skill) tryUltimate(skill);
+  const skill = Object.values(ULTIMATE_DEFS).find(def => def.hotkey.toLowerCase() === key);
+  if (skill) tryUltimate(skill.key);
 });
 
 let lastWaveState = '';
@@ -344,7 +383,8 @@ function refreshWaveHud() {
   const live = waves.isWaveInProgress();
   const countdown = Math.ceil(waves.nextWaveIn);
   const blocked = fieldBlocked();
-  const state = [waves.waveIndex, waves.remainingEnemies, countdown, blocked, manualPause, gameOver].join('/');
+  const state = [waves.waveIndex, waves.remainingEnemies, countdown, blocked, manualPause, gameOver,
+    ultimate.canActivate(UltimateType.REPAIR)].join('/');
   if (state === lastWaveState) return;
   lastWaveState = state;
   const index = Math.min(level.orders.length - 1, live ? waves.waveIndex - 1 : waves.waveIndex);
@@ -380,6 +420,7 @@ function battleStep(dt) {
   ultimate.update(dt, { monsters: waves.getActive(), effects, economy, canvasW: CANVAS_WIDTH, canvasH: CANVAS_HEIGHT });
   if (economy.isGameOver() || waves.isVictory) {
     gameOver = true;
+    syncMusicActivity();
     const won = !economy.isGameOver();
     audio.play(won ? 'victory' : 'gameover');
     showResult(won, { waves, economy, soldiers, upgrades });

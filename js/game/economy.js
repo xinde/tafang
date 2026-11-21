@@ -56,6 +56,15 @@ export class Economy {
     this._emit();
   }
 
+  /** 回满本关城堡耐久，仅在实际恢复时通知 HUD。 */
+  repairBase() {
+    if (this.isGameOver() || this.baseLives >= this.maxLives) return 0;
+    const restored = this.maxLives - this.baseLives;
+    this.baseLives = this.maxLives;
+    this._emit();
+    return restored;
+  }
+
   isGameOver() {
     return this.baseLives <= 0;
   }

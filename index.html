@@ -6,16 +6,19 @@
   <meta name="theme-color" content="#162020">
   <title>余烬守卫 · Emberwatch</title>
   <link rel="icon" href="assets/img/base.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=12maps">
+  <link rel="stylesheet" href="css/style.css?v=music-repair">
 </head>
 <body>
   <header class="mast">
     <div class="mast-inner">
       <div class="brand"><img src="assets/img/base.svg" width="38" height="38" alt=""><div><strong>余烬守卫</strong><span lang="en">EMBERWATCH</span></div></div>
       <nav aria-label="游戏菜单">
-        <button id="btn-campaign" class="nav-button"><svg class="icon"><use href="assets/img/icons.svg#map"/></svg>战役地图</button>
-        <button id="btn-guide" class="nav-button" aria-label="玩法手册"><svg class="icon"><use href="assets/img/icons.svg#book"/></svg><span>玩法手册</span></button>
-        <button id="btn-mute" class="icon-button" aria-label="静音" title="静音" aria-pressed="false"><svg class="icon"><use href="assets/img/icons.svg#sound"/></svg></button>
+        <button id="btn-campaign" class="nav-button"><svg class="icon"><use href="assets/img/icons.svg?v=music#map"/></svg>战役地图</button>
+        <button id="btn-guide" class="nav-button" aria-label="玩法手册"><svg class="icon"><use href="assets/img/icons.svg?v=music#book"/></svg><span>玩法手册</span></button>
+        <div class="audio-controls" role="group" aria-label="声音设置">
+          <button id="btn-music" class="nav-button audio-toggle" aria-label="背景音乐" title="关闭背景音乐" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg?v=music#music"/></svg><span>音乐</span></button>
+          <button id="btn-mute" class="nav-button audio-toggle" aria-label="战斗音效" title="关闭战斗音效" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="assets/img/icons.svg?v=music#sound"/></svg><span>音效</span></button>
+        </div>
       </nav>
     </div>
   </header>
@@ -24,7 +27,7 @@
     <section class="stage-banner" aria-labelledby="stage-title">
       <img id="stage-landscape" class="stage-landscape" alt="" decoding="async">
       <div class="banner-copy">
-        <p class="chapter-line"><svg class="icon"><use href="assets/img/icons.svg#flag"/></svg><span id="chapter-number"></span><span class="chapter-line-rule"></span><span id="stage-difficulty"></span></p>
+        <p class="chapter-line"><svg class="icon"><use href="assets/img/icons.svg?v=music#flag"/></svg><span id="chapter-number"></span><span class="chapter-line-rule"></span><span id="stage-difficulty"></span></p>
         <h1 id="stage-title"></h1>
         <p id="stage-desc"></p>
       </div>
@@ -36,13 +39,13 @@
           <div class="status-bar">
             <div id="phase" class="phase"><i></i><span>布防中</span></div>
             <div class="stats">
-              <span id="hud-gold" class="stat gold" title="可用金币"><svg class="icon"><use href="assets/img/icons.svg#coin"/></svg><span class="stat-label">金币</span><b></b></span>
-              <span id="hud-lives" class="stat" title="基地耐久"><svg class="icon"><use href="assets/img/icons.svg#heart"/></svg><span class="stat-label">耐久</span><b></b></span>
-              <span id="hud-wave" class="stat" title="当前波次"><svg class="icon"><use href="assets/img/icons.svg#flag"/></svg><span class="stat-label">波次</span><b></b></span>
+              <span id="hud-gold" class="stat gold" title="可用金币"><svg class="icon"><use href="assets/img/icons.svg?v=music#coin"/></svg><span class="stat-label">金币</span><b></b></span>
+              <span id="hud-lives" class="stat" title="基地耐久"><svg class="icon"><use href="assets/img/icons.svg?v=music#heart"/></svg><span class="stat-label">耐久</span><b></b></span>
+              <span id="hud-wave" class="stat" title="当前波次"><svg class="icon"><use href="assets/img/icons.svg?v=music#flag"/></svg><span class="stat-label">波次</span><b></b></span>
             </div>
             <div class="time-controls">
-              <button id="btn-speed" class="compact" aria-label="切换战斗速度"><svg class="icon"><use href="assets/img/icons.svg#fast"/></svg><b>1×</b></button>
-              <button id="btn-pause" class="compact" aria-label="暂停" title="暂停（P）" aria-pressed="false"><svg class="icon"><use href="assets/img/icons.svg#pause"/></svg></button>
+              <button id="btn-speed" class="compact" aria-label="切换战斗速度"><svg class="icon"><use href="assets/img/icons.svg?v=music#fast"/></svg><b>1×</b></button>
+              <button id="btn-pause" class="compact" aria-label="暂停" title="暂停（P）" aria-pressed="false"><svg class="icon"><use href="assets/img/icons.svg?v=music#pause"/></svg></button>
             </div>
           </div>
           <div id="game-wrap"><canvas id="game-canvas" aria-label="战场，点击带加号的石台部署守卫"></canvas>
@@ -53,12 +56,12 @@
         <div class="forecast">
           <div class="forecast-art"><img id="forecast-portrait" alt="" width="42" height="42"></div>
           <div class="forecast-text"><div class="eyebrow" id="forecast-label"></div><h2 id="forecast-name"></h2><p id="forecast-detail"></p></div>
-          <button id="btn-next-wave" class="primary"><svg class="icon"><use href="assets/img/icons.svg#play"/></svg><span>迎战</span></button>
+          <button id="btn-next-wave" class="primary"><svg class="icon"><use href="assets/img/icons.svg?v=music#play"/></svg><span>迎战</span></button>
         </div>
       </section>
 
       <aside class="arsenal" aria-labelledby="arsenal-title">
-        <div class="arsenal-heading"><svg class="icon"><use href="assets/img/icons.svg#sword"/></svg><h2 id="arsenal-title">守备工坊</h2></div>
+        <div class="arsenal-heading"><svg class="icon"><use href="assets/img/icons.svg?v=music#sword"/></svg><h2 id="arsenal-title">守备工坊</h2></div>
         <div class="shop-tabs" aria-label="工坊面板">
           <button id="tab-deploy" aria-pressed="true" aria-controls="deploy-panel">部署守卫</button>
           <button id="tab-upgrade" aria-pressed="false" aria-controls="upgrade-panel">全局强化</button>
@@ -76,7 +79,7 @@
         </div>
         <div class="sell-row"><span>返还造价的 50%</span><button id="btn-sell" class="small-button" aria-pressed="false">出售守卫</button></div>
         <section class="skills" aria-labelledby="skills-title">
-          <div class="skills-title"><h3 id="skills-title"><svg class="icon"><use href="assets/img/icons.svg#bolt"/></svg>战场技能</h3><span id="energy-count">0 / 100</span></div>
+          <div class="skills-title"><h3 id="skills-title"><svg class="icon"><use href="assets/img/icons.svg?v=music#bolt"/></svg>战场技能</h3><span id="energy-count">0 / 100</span></div>
           <div class="energy-track"><span id="energy-fill"></span></div>
           <div id="ultimate-bar"></div>
         </section>
@@ -85,7 +88,7 @@
   </main>
 
   <dialog id="campaign-dialog" aria-labelledby="campaign-title">
-    <div class="dialog-head"><h2 id="campaign-title">战役地图</h2><button class="icon-button" data-close aria-label="关闭地图"><svg class="icon"><use href="assets/img/icons.svg#close"/></svg></button></div>
+    <div class="dialog-head"><h2 id="campaign-title">战役地图</h2><button class="icon-button" data-close aria-label="关闭地图"><svg class="icon"><use href="assets/img/icons.svg?v=music#close"/></svg></button></div>
     <div id="stage-list"></div>
     <div class="dialog-actions">
       <p id="campaign-note"></p>
@@ -93,14 +96,15 @@
     </div>
   </dialog>
   <dialog id="guide-dialog" aria-labelledby="guide-title">
-    <div class="dialog-head"><h2 id="guide-title">玩法手册</h2><button class="icon-button" data-close aria-label="关闭手册"><svg class="icon"><use href="assets/img/icons.svg#close"/></svg></button></div>
+    <div class="dialog-head"><h2 id="guide-title">玩法手册</h2><button class="icon-button" data-close aria-label="关闭手册"><svg class="icon"><use href="assets/img/icons.svg?v=music#close"/></svg></button></div>
     <dl class="guide">
       <dt>随机或指定战场</dt><dd>从游戏首页进入会随机抽图，同一标签页一轮内不重复。想换地形，可在「战役地图」点「随机换一关」或自己挑选。结算后可以重试同一关。</dd>
       <dt>守住旗帜</dt><dd>敌人从红旗进入，沿土路进攻城堡。漏敌会损失耐久，撑过最后一波即获胜。</dd>
       <dt>在石台上布防</dt><dd>选择守卫，再点带加号的石台。弩手适合弯道，重炮擅长对付密集敌群。触屏按住空石台可预览射程，松手部署。</dd>
       <dt>利用整备时间</dt><dd>迎战前可以查看敌群编成。两波之间提前迎战，按剩余时间奖励最多 8 金币。</dd>
-      <dt>强化与技能</dt><dd>击杀获得金币和能量。答对题目可购买全队强化。能量满后，战斗中任选一种战场技能。</dd>
-      <dt>快捷操作</dt><dd><kbd>1–7</kbd> 切换守卫，<kbd>Q W E</kbd> 释放技能，<kbd>P</kbd> 暂停。右键或长按已部署守卫可出售。</dd>
+      <dt>强化与技能</dt><dd>击杀获得金币和能量。答对题目可购买全队强化。攒满 100 能量后，战斗中可以用「抢修」一次回满城堡和场上所有存活守卫的耐久，也可以选陨石、冰冻或淘金。设施全部完好时会保留能量。</dd>
+      <dt>声音</dt><dd>顶部的「音乐」和「音效」分别开关。背景音乐从首次操作后开始，暂停战斗或切到后台时会暂停。</dd>
+      <dt>快捷操作</dt><dd><kbd>1–7</kbd> 切换守卫，<kbd>Q W E R</kbd> 依次释放陨石、冰冻、淘金、抢修，<kbd>P</kbd> 暂停。右键或长按已部署守卫可出售。</dd>
     </dl>
   </dialog>
   <dialog id="quiz-dialog" aria-labelledby="quiz-title">
@@ -117,6 +121,7 @@
     </div>
     <div class="result-actions"><button id="btn-share" class="small-button">复制战绩</button><button id="btn-restart" class="small-button">重试本关</button><button id="btn-continue" class="primary">下一关</button></div>
   </dialog>
-  <script type="module" src="js/main.js?v=12maps"></script>
+  <audio id="background-music" preload="none" loop></audio>
+  <script type="module" src="js/main.js?v=music-repair"></script>
 </body>
 </html>

@@ -10,7 +10,7 @@ https://creativecommons.org/publicdomain/zero/1.0/
 
 ## 来源说明
 
-这些音效**未从外部素材站下载**，而是由项目内脚本 `scripts/gen-audio.mjs` 通过简单数字信号合成（正弦/三角/方波 + 白噪声 + ADSR 包络）**程序生成**，并以确定性伪随机种子保证可复现。
+短音效由项目内脚本 `scripts/gen-audio.mjs` 通过简单数字信号合成（正弦/三角/方波 + 白噪声 + ADSR 包络）生成，并以确定性伪随机种子保证可复现。
 
 之所以采用程序生成而非从 freesound / opengameart / mixkit / kenney 等站点下载：
 - 这些站点的素材 URL 多有热链接保护或需登录鉴权，无法在构建期可靠地程序化下载；
@@ -42,7 +42,13 @@ https://creativecommons.org/publicdomain/zero/1.0/
 | button.wav | 通用 UI 点击 | main.selectWeapon / 取消静音 |
 | tower_down.wav | 防御塔被远程摧毁（金属垮塌 + 低频） | wave.update 塔损结算 |
 
-## 重新生成
+## 背景音乐
+
+[`watchfire.mp3`](watchfire.mp3) 是为《余烬守卫》创作的循环曲《城墙上的灯》。24 个小节以 112 BPM 演奏，包含芯片主旋律、拨弦、低音和轻打击乐，沿用本项目音效的 CC0 协议。网页只在开始播放时读取这首曲子。
+
+完整乐谱与合成参数在 `scripts/gen-music.mjs`。安装 FFmpeg 后，运行 `node scripts/gen-music.mjs` 即可重新编码曲目。
+
+## 重新生成短音效
 
 ```bash
 node scripts/gen-audio.mjs

@@ -1,10 +1,11 @@
 /**
  * UltimateManager：玩家大招（手动技能）系统。
  *
- * 击杀怪兽积累能量，满后可手动释放三种大招之一：
+ * 击杀怪兽积累能量，满后可手动释放一种战场技能：
  * - METEOR（陨石雨）：全屏随机位置范围伤害，持续 3 秒
  * - FREEZE（全图冰冻）：所有怪物暂停移动 3 秒（冰冻状态）
  * - GOLD_RUSH（金币狂暴）：下波击杀奖励 ×2，持续到下次波间
+ * - REPAIR（战地抢修）：立即回满城堡和存活守卫的耐久，全部完好时保留能量。
  *
  * 能量上限 100，每次击杀 +4（BOSS +12）。满 100 后可释放。
  * 释放后能量清零，重新积累。
@@ -21,12 +22,14 @@ export const UltimateType = {
   METEOR: 'meteor',
   FREEZE: 'freeze',
   GOLD_RUSH: 'gold_rush',
+  REPAIR: 'repair',
 };
 
 export const ULTIMATE_DEFS = {
   [UltimateType.METEOR]: {
     key: UltimateType.METEOR,
     name: '陨石雨',
+    label: '陨石',
     icon: '☄️',
     hotkey: 'Q',
     desc: '全屏陨石轰炸，持续 3 秒',
@@ -36,6 +39,7 @@ export const ULTIMATE_DEFS = {
   [UltimateType.FREEZE]: {
     key: UltimateType.FREEZE,
     name: '全图冰冻',
+    label: '冰冻',
     icon: '❄️',
     hotkey: 'W',
     desc: '所有怪物冻结 3 秒，无法移动',
@@ -45,11 +49,22 @@ export const ULTIMATE_DEFS = {
   [UltimateType.GOLD_RUSH]: {
     key: UltimateType.GOLD_RUSH,
     name: '金币狂暴',
+    label: '淘金',
     icon: '💰',
     hotkey: 'E',
     desc: '下波击杀奖励 ×2，持续到波间',
     cost: 100,
     duration: 0, // 无固定时长，波间自动结束
+  },
+  [UltimateType.REPAIR]: {
+    key: UltimateType.REPAIR,
+    name: '战地抢修',
+    label: '抢修',
+    icon: '✚',
+    hotkey: 'R',
+    desc: '立即回满城堡和所有存活守卫的耐久',
+    cost: 100,
+    duration: 0,
   },
 };
 
@@ -65,7 +80,8 @@ import { CONFIG } from '../config.js';
 const METEOR_RADIUS = CONFIG.CELL_SIZE * 1.5;
 
 export class UltimateManager {
-  constructor() {
+  constructor(facilities = null) {
+    this.facilities = facilities;
     this.energy = 0;
     this.activeUltimate = null;       // 当前激活的大招类型
     this._timer = 0;                  // 大招剩余时长
@@ -105,19 +121,41 @@ export class UltimateManager {
     this._emit();
   }
 
+  canActivate(type) {
+    if (!this.isReady || !ULTIMATE_DEFS[type]?.key) return false;
+    if (type !== UltimateType.REPAIR) return true;
+    if (!this.facilities) return false;
+    const { economy, soldiers } = this.facilities;
+    return !economy.isGameOver() && (economy.baseLives < economy.maxLives ||
+      soldiers.getAll().some(s => s.alive && s.hp < s.maxHp));
+  }
+
+  _repairFacilities() {
+    const { economy, soldiers, basePosition, effects } = this.facilities;
+    const showRepair = (position, amount) => {
+      if (!effects || !amount) return;
+      effects.spawnHeal(position.x, position.y - 12, amount);
+      effects.spawnBlast(position.x, position.y, CONFIG.CELL_SIZE * .62, '#99dca4');
+    };
+    showRepair(basePosition, economy.repairBase());
+    for (const soldier of soldiers.getAll()) showRepair(soldier, soldier.heal(soldier.maxHp));
+  }
+
   /**
    * 释放大招。
    * @param {string} type UltimateType
    * @returns {boolean} 是否成功释放
    */
   activate(type) {
-    if (!this.isReady) return false;
-    const def = ULTIMATE_DEFS[type];
-    if (!def) return false;
-    this.activeUltimate = type;
-    this._timer = def.duration;
-    this._meteorTimer = 0;
+    if (!this.canActivate(type)) return false;
     this.energy = 0;
+    if (type === UltimateType.REPAIR) {
+      this._repairFacilities();
+    } else {
+      this.activeUltimate = type;
+      this._timer = ULTIMATE_DEFS[type].duration;
+      this._meteorTimer = 0;
+    }
     this._emit();
     return true;
   }
