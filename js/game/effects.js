@@ -21,7 +21,7 @@ export class EffectManager {
     });
   }
 
-  /** 回血飘字（击杀者生命窃取），颜色绿、前缀 + */
+  /** 回血飘字（击杀回血或抢修），颜色绿、前缀 + */
   spawnHeal(x, y, amount) {
     this.effects.push({
       kind: 'heal', x, y, amount: Math.round(amount), color: '#58d968',
@@ -64,7 +64,7 @@ export class EffectManager {
   update(dt) {
     for (const e of this.effects) {
       e.life -= dt;
-      if (e.kind === 'damage') e.y += e.vy * dt;
+      if (e.kind === 'damage' || e.kind === 'heal') e.y += e.vy * dt;
     }
     for (let i = this.effects.length - 1; i >= 0; i--) {
       if (this.effects[i].life <= 0) this.effects.splice(i, 1);
