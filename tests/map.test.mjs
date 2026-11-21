@@ -181,7 +181,7 @@ test('回旋弯路地图：路径标记正确，非路径区域可放置', () =>
   // 基地
   assert.equal(map.getCell(19, 4), CellType.BASE);
   // 非路径区可放置
-  assert.equal(map.canPlace(10, 8), true);
+  assert.equal(map.canPlace(11, 9), true);
 });
 
 test('随机选图：多次构造不同地图配置产生不同的路径形状', () => {

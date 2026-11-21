@@ -1,5 +1,5 @@
 import { CONFIG } from '../config.js';
-import { Projectile } from './projectile.js?v=tactics';
+import { Projectile } from './projectile.js?v=pad-fix';
 
 /**
  * 怪兽类型模板。每种类型决定基础血量/速度/金币奖励/体型/颜色/护甲。
@@ -201,6 +201,11 @@ export class Monster {
   /** 当前是否处于减速状态（可供渲染加特效） */
   get isSlowed() {
     return this.alive && (this.slowTimer > 0 || this.freezeTimer > 0);
+  }
+
+  /** 怪物本体的逻辑像素半径，供绘制和炮弹接触判定共用。 */
+  get radiusPx() {
+    return this.radius * this.map.cellSize;
   }
 
   consumeFrost() {

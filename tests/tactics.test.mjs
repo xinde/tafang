@@ -69,16 +69,19 @@ test('弩手按实际命中给第三箭加伤，换目标重计，两座弩手�
   shoot(two,a,[a,b],'volley'); shoot(two,a,[a,b],'volley'); assert.equal(a.hp,37);
 });
 
-test('覆盖使用连续路段与圆的交点，能识别两座近卫打不到路的石台', () => {
+test('覆盖预览能识别空射程和相切路段，调整后的两个石台都有近卫覆盖', () => {
   const straight = new GameMap({waypoints:[{col:-1,row:2},{col:7,row:2}]});
   const part = straight.coveredRoad(3,1,60);
   assert.deepEqual(part, [[132,120,204,120]]);
   assert.deepEqual(straight.coveredRoad(3,1,47),[]);
   assert.deepEqual(straight.coveredRoad(3,1,48),[[168,120,168,120]]);
-  for (const [id,col,row] of [['tide',19,5],['amber',10,8]]) {
+  for (const [id,oldSite,newSite] of [['tide',[19,5],[19,8]],['amber',[10,8],[11,9]]]) {
     const stageMap = new GameMap(maps.maps.find(s=>s.id===id));
-    assert.equal(stageMap.coveredRoad(col,row,new Soldier(col,row,'sword').range).length,0);
-    assert.ok(stageMap.coveredRoad(col,row,new Soldier(col,row,'arrow').range).length);
+    const range = new Soldier(...newSite, 'sword').range;
+    assert.equal(stageMap.canPlace(...oldSite), false);
+    assert.deepEqual(stageMap.coveredRoad(...oldSite, range), []);
+    assert.ok(stageMap.canPlace(...newSite));
+    assert.ok(stageMap.coveredRoad(...newSite, range).length > 0);
   }
 });
 

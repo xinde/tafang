@@ -16,8 +16,8 @@
 | --- | ---: | --- | --- |
 | [苔桥前哨](https://xinde.github.io/tafang/?stage=moss) | 5 | 同时最多 4 卫 | 在桥头与折角练习布塔。 |
 | [风车麦田](https://xinde.github.io/tafang/?stage=mill) | 5 | 提前迎战 2 次 | 弩手守麦垄内弯，重炮守长直道。 |
-| [潮汐灯港](https://xinde.github.io/tafang/?stage=tide) | 5 | 全程零漏怪 | 在浅滩拦住快狼，保留灯塔前的补防点。 |
-| [琥珀回廊](https://xinde.github.io/tafang/?stage=amber) | 6 | 提前迎战 3 次 | 用重炮或雷塔覆盖两段折返路。 |
+| [潮汐灯港](https://xinde.github.io/tafang/?stage=tide) | 5 | 全程零漏怪 | 先在浅滩拦住快狼，城门前最后一段竖道的右侧石台可用近卫补防。 |
+| [琥珀回廊](https://xinde.github.io/tafang/?stage=amber) | 6 | 提前迎战 3 次 | 下方折返路内侧的石台可用近卫拦截，也可放重炮覆盖上下两段路。 |
 | [萤火湿地](https://xinde.github.io/tafang/?stage=fen) | 6 | 同时最多 4 卫 | 雷塔清理蝠群，后排守卫对付巫师。 |
 | [翠竹山径](https://xinde.github.io/tafang/?stage=bamboo) | 6 | 同时最多 4 卫 | 在竹溪转角布置重炮，掩护前排。 |
 | [霜隙古道](https://xinde.github.io/tafang/?stage=frost) | 7 | 全程零漏怪 | 霜晶拦快狼，穿甲弩对付铁卫。 |

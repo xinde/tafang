@@ -60,7 +60,10 @@ export class Projectile {
     const dist = Math.hypot(dx, dy);
     const step = this.speed * dt;
 
-    if (dist <= step || dist === 0) {
+    // 炮弹接触活怪的本体就引爆。快狼可能与炮弹同速，等两个中心相遇会让炮弹贴身追到城门。
+    const body = this.aoe > 0 && this.target?.alive ? this.target.radiusPx : 0;
+    const contact = body > 0 ? this.radius + body : 0;
+    if (dist <= step + contact) {
       this.x = this._tx;
       this.y = this._ty;
       this._hit(monsters, effects);

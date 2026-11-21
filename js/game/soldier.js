@@ -1,6 +1,6 @@
 import { CONFIG } from '../config.js';
 import { getWeapon, WeaponType } from './weapon.js';
-import { Projectile } from './projectile.js?v=tactics';
+import { Projectile } from './projectile.js?v=pad-fix';
 import { TACTICS } from './tactics.js';
 import { audio } from '../engine/audio.js';
 

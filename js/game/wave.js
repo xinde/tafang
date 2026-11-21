@@ -1,4 +1,4 @@
-import { Monster, MonsterType } from './monster.js?v=tactics';
+import { Monster, MonsterType } from './monster.js?v=pad-fix';
 import { audio } from '../engine/audio.js';
 import { BossStrike } from './boss-strike.js';
 
