@@ -35,6 +35,7 @@ export class QuizBank {
     this.questions = [];
     this.groups.forEach((g, gi) => g.questions.forEach((q) => this.questions.push({ ...q, group: gi })));
     this._used = new Set();
+    this._lastQuestion = null;
   }
 
   /** 校验题库结构，返回规范化后的组列表 */
@@ -85,9 +86,12 @@ export class QuizBank {
    */
   drawQuestion({ tags } = {}) {
     if (this.questions.length === 0) throw new Error('题库为空，无法抽题');
-    if (this._used.size >= this.questions.length) this._used.clear(); // 全部出尽 → 重置
-
-    const fresh = this.questions.filter((_, i) => !this._used.has(i));
+    let fresh = this.questions.filter(q => !this._used.has(q));
+    if (fresh.length === 0) {
+      this._used.clear();
+      // 只在新一轮的首抽避开上一轮末题，它仍可在本轮后续抽到。
+      fresh = this.size === 1 ? this.questions : this.questions.filter(q => q !== this._lastQuestion);
+    }
     // 标签优先：优先从带匹配标签的未出题里抽
     let candidates = fresh;
     if (tags && tags.length) {
@@ -95,7 +99,8 @@ export class QuizBank {
       if (tagged.length) candidates = tagged;
     }
     const q = candidates[Math.floor(Math.random() * candidates.length)];
-    this._used.add(this.questions.indexOf(q));
+    this._used.add(q);
+    this._lastQuestion = q;
     return { ...q };
   }
 
