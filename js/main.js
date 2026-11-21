@@ -1,29 +1,32 @@
 import { CONFIG, CANVAS_WIDTH, CANVAS_HEIGHT } from './config.js';
 import { GameLoop } from './engine/loop.js';
-import { Renderer } from './engine/renderer.js?v=12maps';
+import { Renderer } from './engine/renderer.js?v=tactics';
 import { paintTerrain } from './engine/terrain.js?v=12maps';
 import { Input } from './engine/input.js';
 import { audio } from './engine/audio.js';
 import { BackgroundMusic } from './engine/music.js';
 import { assets } from './engine/assets.js';
-import { GameMap } from './game/map.js?v=12maps';
-import { StageRotation } from './game/stage-rotation.js';
+import { GameMap } from './game/map.js?v=tactics';
+import { StageRotation } from './game/stage-rotation.js?v=tactics';
 import { Economy } from './game/economy.js?v=music-repair';
-import { Soldier, SoldierManager } from './game/soldier.js';
-import { WaveManager, campaignWaves } from './game/wave.js';
-import { ProjectileManager } from './game/projectile.js';
+import { Soldier, SoldierManager } from './game/soldier.js?v=tactics';
+import { WaveManager, campaignWaves } from './game/wave.js?v=tactics';
+import { ProjectileManager } from './game/projectile.js?v=tactics';
 import { EffectManager } from './game/effects.js?v=music-repair';
 import { WEAPONS, WeaponType } from './game/weapon.js';
 import { UpgradeManager, UPGRADE_DEFS } from './game/upgrade.js';
-import { QuizBank, QuizGate } from './game/quiz.js';
+import { initQuizPanel } from './quiz-panel.js';
+import { BattleTactics } from './game/tactics.js';
+import { initTacticChoice, initGuardOrders, tacticDialog } from './battle-panel.js';
+import { drawBossWarnings } from './engine/boss-warning.js';
 import { WeatherManager, WeatherFX } from './game/weather.js';
 import { UltimateManager, UltimateType, ULTIMATE_DEFS } from './game/ultimate.js?v=music-repair';
-import { initCampaign, campaignDialog, guideDialog } from './campaign.js?v=12maps';
+import { initCampaign, campaignDialog, guideDialog } from './campaign.js?v=tactics';
 
 const byId = id => document.getElementById(id);
 async function loadConfig(name) {
   const url = new URL('../config/' + name + '.json', import.meta.url);
-  if (name === 'maps' || name === 'waves') url.search = new URL(import.meta.url).search;
+  if (name === 'maps' || name === 'waves' || name === 'quiz') url.search = new URL(import.meta.url).search;
   const response = await fetch(url);
   if (!response.ok) throw new Error(name + '.json HTTP ' + response.status);
   return response.json();
@@ -37,16 +40,15 @@ const [waveConfig, quizConfig, weatherConfig, mapsConfig] = await Promise.all(
 const iconSheet = 'assets/img/icons.svg?v=music#';
 const icon = key => '<svg class="icon" aria-hidden="true"><use href="' + iconSheet + key + '"/></svg>';
 const selectedId = new URLSearchParams(location.search).get('stage');
-let stageStorage;
-try { stageStorage = window.sessionStorage; } catch { /* 部分浏览器会拒绝访问会话存储 */ }
-const rotation = new StageRotation(mapsConfig.maps, stageStorage);
+const rotation = StageRotation.forBrowser(mapsConfig.maps);
 const stage = rotation.select(selectedId);
 const map = new GameMap(stage);
 const terrain = paintTerrain(map, stage);
 const economy = new Economy(stage);
 const soldiers = new SoldierManager();
 const level = campaignWaves(waveConfig, stage);
-const waves = new WaveManager(map, level, { soldiers });
+const tactics = new BattleTactics();
+const waves = new WaveManager(map, level, { soldiers, tactics });
 const projectiles = new ProjectileManager();
 const effects = new EffectManager();
 const upgrades = new UpgradeManager();
@@ -68,8 +70,14 @@ let sellMode = false;
 let manualPause = false;
 let speed = 1;
 let gameOver = false;
-const showResult = initCampaign(mapsConfig.maps, stage, () => waves.waveIndex > 0 || soldiers.getAll().length > 0,
-  () => rotation.select());
+const {showResult, recordDeployment, recordEarlyWave, recordLeaks} = initCampaign(
+  mapsConfig.maps, stage, () => waves.waveIndex > 0 || soldiers.getAll().length > 0, rotation);
+const orders = initGuardOrders(tactics);
+const offerTactic = initTacticChoice(tactics, waves, def => {
+  hint('已采用' + def.name);
+  audio.play('upgrade');
+});
+let pendingBuild = null;
 
 function resizeCanvas() {
   const rect = canvas.getBoundingClientRect();
@@ -154,7 +162,7 @@ waves.setOnKill(m => {
 });
 
 function fieldBlocked() {
-  return gameOver || manualPause || quizGate.isOpen || campaignDialog.open || guideDialog.open;
+  return gameOver || manualPause || quizGate.isOpen || campaignDialog.open || guideDialog.open || tacticDialog.open;
 }
 function hint(message) { byId('field-hint').textContent = message; }
 const weaponGrid = byId('weapon-grid');
@@ -226,6 +234,8 @@ for (const tab of ['deploy', 'upgrade']) {
 }
 function setSellMode(active) {
   sellMode = active;
+  pendingBuild = null;
+  orders.select(null);
   byId('btn-sell').setAttribute('aria-pressed', String(active));
   byId('btn-sell').textContent = active ? '退出出售' : '出售守卫';
 }
@@ -241,7 +251,8 @@ function sellAt({col, row}) {
   if (!soldier) { hint('这里没有可出售的守卫'); return; }
   soldiers.removeAt(col, row);
   map.release(col, row);
-  const refund = Math.floor(soldier.cost / 2);
+  if (orders.selected === soldier) orders.select(null);
+  const refund = tactics.saleRefund(soldier.cost);
   economy.refund(refund);
   hint('已出售' + soldier.weapon.name + '，返还 ' + refund + ' 金');
   audio.play('sell');
@@ -252,66 +263,41 @@ input.onCellClick(cell => {
   if (sellMode) return sellAt(cell);
   const {col, row} = cell;
   if (!map.canPlace(col, row)) {
+    pendingBuild = null;
     const occupant = soldiers.getAt(col, row);
-    hint(occupant ? occupant.weapon.name + ' · 耐久 ' + occupant.hp + '/' + occupant.maxHp : '请在带 + 的石台上部署守卫');
+    orders.select(occupant || null);
+    hint(occupant ? '可在地图下方设置索敌顺序' : '请在带 + 的石台上部署守卫');
     return;
   }
+  orders.select(null);
   const w = WEAPONS[currentWeapon];
+  const range = w.range * combinedMultipliers().rangeMul;
+  if (!map.coveredRoad(col, row, range).length && (pendingBuild?.col !== col || pendingBuild?.row !== row)) {
+    pendingBuild = {col, row};
+    hint('当前射程未覆盖道路，再点同一石台可确认部署');
+    return;
+  }
+  pendingBuild = null;
   if (!economy.spend(w.cost)) { hint('还差 ' + (w.cost - economy.gold) + ' 金才能部署' + w.name); return; }
   map.occupy(col, row);
   const soldier = new Soldier(col, row, currentWeapon);
   soldier.recompute(combinedMultipliers());
   soldiers.add(soldier);
+  recordDeployment(soldiers.getAll().filter(s => s.alive).length);
   audio.play('place');
   hint(w.name + '已部署');
 });
 
-const quizDialog = byId('quiz-dialog');
-const quizGate = new QuizGate({
-  bank: new QuizBank(quizConfig), upgrades, economy,
-  onOpen: () => quizDialog.showModal(),
-  onClose: () => quizDialog.close(),
-  onResolve: ({ correct, applied }) => {
-    audio.play(applied ? 'upgrade' : 'button');
-    const result = byId('quiz-feedback');
-    result.textContent = applied ? '答对了，强化已生效。' : correct ? '金币不足，未能强化。' :
-      quizGate.lastResult.timedOut ? '时间到，本次未扣金币。' : '本次未扣金币，绿色选项是正确答案。';
-    result.className = applied ? 'is-correct' : 'is-wrong';
-    [...byId('quiz-options').children].forEach((button, i) => {
-      button.disabled = true;
-      button.classList.toggle('is-correct', i === quizGate.question.answer);
-      button.classList.toggle('is-wrong', !correct && i === quizGate.lastResult.answerIndex);
-    });
-  },
-});
-quizDialog.addEventListener('cancel', e => { e.preventDefault(); quizGate.close(); });
-for (const btn of document.querySelectorAll('.up-btn')) {
-  btn.addEventListener('click', () => {
-    const key = btn.dataset.up;
-    if (gameOver || !quizGate.open(key)) return;
-    byId('quiz-upgrade-label').textContent = UPGRADE_DEFS[key].label + ' Lv.' + (upgrades.getLevel(key) + 1) + ' · 答对扣除 ' + upgrades.getCost(key) + ' 金';
-    byId('quiz-question').textContent = quizGate.question.q;
-    byId('quiz-feedback').textContent = '';
-    const options = byId('quiz-options');
-    options.replaceChildren();
-    quizGate.question.options.forEach((answer, i) => {
-      const opt = document.createElement('button');
-      opt.className = 'quiz-opt';
-      opt.textContent = (i + 1) + '. ' + answer;
-      opt.addEventListener('click', () => quizGate.submit(i));
-      options.append(opt);
-    });
-    options.firstElementChild.focus();
-    byId('quiz-timer').textContent = Math.ceil(quizGate.remaining) + 's';
-  });
-}
+const quizGate = initQuizPanel({config: quizConfig, upgrades, economy, isGameOver: () => gameOver});
 
 const ultBar = byId('ultimate-bar');
 function tryUltimate(type) {
   if (fieldBlocked() || !waves.isWaveInProgress() || !ultimate.activate(type)) return;
+  if (type === UltimateType.FREEZE && waves.interruptBossStrikes()) hint('冰冻打断了首领冲击');
   audio.play('upgrade');
   if (type === UltimateType.REPAIR) hint('抢修完成，城堡和守卫耐久已回满');
 }
+byId('interrupt-strike').addEventListener('click', () => tryUltimate(UltimateType.FREEZE));
 for (const def of Object.values(ULTIMATE_DEFS)) {
   const btn = document.createElement('button');
   btn.className = 'ult-btn';
@@ -339,12 +325,12 @@ function launchWave() {
   if (fieldBlocked()) return;
   const bonus = waves.earlyBonus;
   if (!waves.startNextWave(economy)) return;
-  if (bonus) hint('提前迎战，获得 ' + bonus + ' 金');
+  if (bonus) { recordEarlyWave(); hint('提前迎战，获得 ' + bonus + ' 金'); }
   else hint('敌人已从红旗进入');
 }
 byId('btn-next-wave').addEventListener('click', launchWave);
 function togglePause() {
-  if (gameOver || quizGate.isOpen || campaignDialog.open || guideDialog.open) return;
+  if (gameOver || quizGate.isOpen || campaignDialog.open || guideDialog.open || tacticDialog.open) return;
   manualPause = !manualPause;
   syncMusicActivity();
   const btn = byId('btn-pause');
@@ -364,12 +350,13 @@ byId('btn-speed').addEventListener('click', () => {
 });
 window.addEventListener('keydown', e => {
   if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+  if (e.target?.matches?.('select, input, textarea') || e.target?.isContentEditable) return;
   if (quizGate.isOpen) {
     const i = Number(e.key) - 1;
     if (quizGate.isActive && i >= 0 && i < quizGate.question.options.length) quizGate.submit(i);
     return;
   }
-  if (campaignDialog.open || guideDialog.open || gameOver) return;
+  if (campaignDialog.open || guideDialog.open || tacticDialog.open || gameOver) return;
   const key = e.key.toLowerCase();
   if (key === 'p') return togglePause();
   if (manualPause) return;
@@ -412,10 +399,11 @@ function refreshWaveHud() {
 function battleStep(dt) {
   weather.tick(dt);
   const monsters = waves.getActive();
-  soldiers.update(dt, { monsters, projectiles, effects });
+  soldiers.update(dt, { monsters, projectiles, effects, tactic: tactics.choice });
   projectiles.update(dt, monsters, effects);
   effects.update(dt);
-  waves.update(dt, economy, effects, projectiles, weather.modifiers.monsterSpeedMul);
+  waves.update(dt, economy, effects, projectiles, weather.modifiers.monsterSpeedMul, ultimate.isFreezeActive);
+  recordLeaks(waves.leaks);
   if (!waves.isWaveInProgress()) ultimate.endGoldRush();
   ultimate.update(dt, { monsters: waves.getActive(), effects, economy, canvasW: CANVAS_WIDTH, canvasH: CANVAS_HEIGHT });
   if (economy.isGameOver() || waves.isVictory) {
@@ -424,7 +412,7 @@ function battleStep(dt) {
     const won = !economy.isGameOver();
     audio.play(won ? 'victory' : 'gameover');
     showResult(won, { waves, economy, soldiers, upgrades });
-  }
+  } else if (!waves.isWaveInProgress()) offerTactic();
 }
 function update(dt) {
   if (quizGate.isOpen) {
@@ -437,26 +425,63 @@ function update(dt) {
     return;
   }
   if (fieldBlocked() || !waves.waveIndex) return;
-  for (let i = 0; i < speed && !gameOver; i++) battleStep(dt);
+  for (let i = 0; i < speed && !fieldBlocked(); i++) battleStep(dt);
 }
 
 let lastWeather = '';
+const rangeReadout = byId('range-readout'), fieldHint = byId('field-hint');
+let coverageCache = null;
+function previewRoad() {
+  orders.refresh();
+  const cell = input.hoverCell || pendingBuild || orders.selected;
+  if (cell && !fieldBlocked()) {
+    const {col, row} = cell, soldier = soldiers.getAt(col, row);
+    if (soldier || (!sellMode && map.canPlace(col, row))) {
+      const weapon = soldier?.weapon || WEAPONS[currentWeapon];
+      const range = soldier?.range ?? weapon.range * combinedMultipliers().rangeMul;
+      if (!coverageCache || coverageCache.col !== col || coverageCache.row !== row || coverageCache.range !== range) {
+        const parts = map.coveredRoad(col, row, range);
+        const length = parts.reduce((sum, [x,y,u,v]) => sum + Math.hypot(u - x, v - y), 0);
+        coverageCache = {col, row, range, parts, cells: (length / CONFIG.CELL_SIZE).toFixed(1)};
+      }
+      renderer.drawSoldier(col, row, {color: weapon.color, range, showRange: true, image: assets.get('turret_' + weapon.type), ghost: true});
+      renderer.drawRoadCoverage(coverageCache.parts);
+      const empty = !coverageCache.parts.length;
+      const confirm = pendingBuild?.col === col && pendingBuild?.row === row;
+      const label = empty ? (confirm ? '未覆盖道路 · 再点石台确认部署' : '当前射程未覆盖道路') : '可攻击 ' + coverageCache.cells + ' 格路段';
+      if (rangeReadout.textContent !== label) rangeReadout.textContent = label;
+      rangeReadout.classList.toggle('no-range', empty);
+      if (rangeReadout.hidden) { rangeReadout.hidden = false; fieldHint.hidden = true; }
+      return;
+    }
+  }
+  if (!rangeReadout.hidden) { rangeReadout.hidden = true; fieldHint.hidden = false; }
+}
+
+const bossAlert = byId('boss-alert'), bossName = byId('boss-alert-name'), bossClock = byId('boss-countdown'), interrupt = byId('interrupt-strike');
+let announcedStrike = '';
+function renderBossAlert() {
+  const warnings = waves.bossWarnings, first = warnings[0];
+  if (bossAlert.hidden !== !first) bossAlert.hidden = !first;
+  const title = first ? first.theme.name + (warnings.length > 1 ? ' ×' + warnings.length : '') : '';
+  if (title !== announcedStrike) {
+    bossName.textContent = title;
+    byId('boss-announce').textContent = first ? title + '即将命中标记石台，可用冰冻打断' : '';
+    announcedStrike = title;
+  }
+  if (first) {
+    const canInterrupt = !fieldBlocked() && ultimate.canActivate(UltimateType.FREEZE);
+    if (interrupt.hidden !== !canInterrupt) interrupt.hidden = !canInterrupt;
+    const time = (Math.ceil(first.remaining * 10) / 10).toFixed(1) + 's';
+    if (bossClock.textContent !== time) bossClock.textContent = time;
+  }
+}
+
 function render() {
   renderer.clear();
   renderer.drawTerrain(terrain);
+  previewRoad();
   renderer.drawBase(map.baseCell.col, map.baseCell.row, {image: assets.get('base')});
-  const hover = input.hoverCell;
-  if (hover && !fieldBlocked()) {
-    const {col, row} = hover;
-    const soldier = soldiers.getAt(col, row);
-    if (soldier || (map.canPlace(col, row) && !sellMode)) {
-      const w = soldier?.weapon || WEAPONS[currentWeapon];
-      renderer.drawSoldier(col, row, {
-        color: w.color, range: soldier?.range ?? w.range * combinedMultipliers().rangeMul, showRange: true,
-        image: assets.get('turret_' + w.type), ghost: true,
-      });
-    }
-  }
   for (const s of soldiers.getAll()) {
     renderer.drawSoldier(s.col, s.row, {color: s.weapon.color, angle: s.angle, image: assets.get('turret_' + s.weapon.type)});
     if (s.hp < s.maxHp) renderer.drawHealthBar(s.x, s.y - 27, 33, s.hpRatio);
@@ -472,6 +497,8 @@ function render() {
     renderer.drawCircle(p.x, p.y, p.radius, p.color);
   }
   effects.draw(renderer);
+  drawBossWarnings(renderer, waves, stage);
+  renderBossAlert();
   weatherFX.draw(ctx, CANVAS_WIDTH, CANVAS_HEIGHT, fieldBlocked() ? 0 : CONFIG.FIXED_DT * speed, weather.currentWeather);
   if (ultimate.isFreezeActive || ultimate.isMeteorActive) {
     ctx.fillStyle = ultimate.isFreezeActive ? 'rgba(90,175,240,.14)' : 'rgba(236,112,51,.10)';

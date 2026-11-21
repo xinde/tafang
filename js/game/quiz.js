@@ -3,14 +3,14 @@
  *
  * QuizBank —— 题库：
  * - 从配置（config/quiz.json）加载题库并校验结构合法性。
- * - drawQuestion({ tags }): 随机抽题，全局不重复（同题不连续出现）；全池出尽后重置。
+ * - drawQuestion({ tags, difficulty }): 按档抽题，每档出尽后单独开启下一轮。
  *   可选 tags 过滤：优先抽带指定标签的题（如升级"攻击力"传 ['damage']），无匹配则回退任意题。
  * - checkAnswer(): 判定选择是否答对。
  *
- * QuizGate —— 门禁状态机（idle → active → feedback → idle）：
+ * QuizGate —— 答对后短暂显示结果，答错与超时则停留在 review 供阅读解析。
  * - open(key)：点击升级时开启门禁。校验可升级/金币足够后抽题（tags=[key]），进入答题计时。
  * - submit(index)：答题阶段提交选项；答对立即 upgrades.buy（扣金币+升级），进入反馈展示；
- *   答错不 buy。反馈结束 onClose 恢复游戏。
+ *   在 review 可调用 retry() 换一道本档新题，或 close() 返回战场。
  * - tick(dt)：由 main.js 在 paused 分支用固定 dt 驱动。active 阶段递减倒计时，超时视为答错
  *   （幂等，只触发一次 onResolve）；feedback 阶段结束后 onClose。
  * - 音频/士兵 recompute 等副作用由注入的 onOpen/onResolve/onClose 回调处理（main.js 提供）。
@@ -23,6 +23,14 @@
  *   gate.submit(2);           // 玩家点击选项
  *   gate.tick(dt);            // 主循环 paused 分支里每帧调用
  */
+export const QUIZ_DIFFICULTIES = Object.freeze({ easy: '轻松', standard: '标准', challenge: '挑战' });
+
+function secondsFor(question, difficulty) {
+  if (difficulty === 'easy') return Math.max(40, question.timeLimit + 10);
+  if (difficulty === 'challenge') return Math.max(20, question.timeLimit - 5);
+  return question.timeLimit;
+}
+
 export class QuizBank {
   /**
    * @param {object} config 题库配置（结构见 config/quiz.json）
@@ -30,12 +38,13 @@ export class QuizBank {
    */
   constructor(config) {
     this.groups = this._validate(config);
-    // 展平所有题，全局"已出题"集合（跨组不重复，全出尽后重置）
-    /** @type {{q:string, options:string[], answer:number, timeLimit:number, group:number, tags:string[]}[]} */
-    this.questions = [];
-    this.groups.forEach((g, gi) => g.questions.forEach((q) => this.questions.push({ ...q, group: gi })));
-    this._used = new Set();
-    this._lastQuestion = null;
+    this.questions = this.groups.flatMap((g, group) => g.questions.map(q => ({ ...q, group })));
+    this._decks = new Map();
+    // 每档独立记忆本轮题目；无难度参数的调用仍使用全题库。
+    for (const mode of ['all', ...Object.keys(QUIZ_DIFFICULTIES)]) {
+      const pool = mode === 'all' ? this.questions : this.questions.filter(q => q.difficulty === mode);
+      if (pool.length) this._decks.set(mode, { pool, used: new Set(), last: null });
+    }
   }
 
   /** 校验题库结构，返回规范化后的组列表 */
@@ -48,6 +57,8 @@ export class QuizBank {
         throw new Error(`quiz 第 ${gi} 组缺少非空 questions 数组`);
       }
       const groupTime = Number(g.timeLimit);
+      const groupLevel = { medium: 'standard', hard: 'challenge' }[g.difficulty] || g.difficulty;
+      const defaultDifficulty = Object.hasOwn(QUIZ_DIFFICULTIES, groupLevel) ? groupLevel : 'standard';
       const questions = g.questions.map((q, qi) => {
         if (!q || typeof q.q !== 'string' || q.q.trim() === '') {
           throw new Error(`quiz 第 ${gi} 组第 ${qi} 题缺少题干 q`);
@@ -62,11 +73,17 @@ export class QuizBank {
         if (!Number.isFinite(timeLimit) || timeLimit <= 0) {
           throw new Error(`quiz 第 ${gi} 组第 ${qi} 题限时非法：${q.timeLimit}`);
         }
+        const difficulty = q.difficulty ?? defaultDifficulty;
+        if (!Object.hasOwn(QUIZ_DIFFICULTIES, difficulty)) {
+          throw new Error(`quiz 第 ${gi} 组第 ${qi} 题难度非法：${difficulty}`);
+        }
         return {
           q: q.q,
           options: q.options.map((s) => String(s)),
           answer: q.answer,
           timeLimit,
+          difficulty,
+          explanation: typeof q.explanation === 'string' ? q.explanation.trim() : '',
           tags: Array.isArray(q.tags) ? q.tags.map(String) : [],
         };
       });
@@ -80,17 +97,15 @@ export class QuizBank {
   }
 
   /**
-   * 随机抽一道未出过的题（全局不重复）。全部出尽后重置（保证随时可升级）。
-   * @param {{tags?: string[]}} [opts] tags 优先匹配（如 ['damage']）；无匹配回退任意题
-   * @returns {{q:string, options:string[], answer:number, timeLimit:number, group:number, tags:string[]}}
+   * 在指定难度内抽取本轮未出过的题目，优先匹配强化标签。旧库缺档时回退全库。
+   * @param {{tags?: string[], difficulty?: string}} [opts]
    */
-  drawQuestion({ tags } = {}) {
-    if (this.questions.length === 0) throw new Error('题库为空，无法抽题');
-    let fresh = this.questions.filter(q => !this._used.has(q));
+  drawQuestion({ tags, difficulty } = {}) {
+    const deck = this._decks.get(difficulty) || this._decks.get('all');
+    let fresh = deck.pool.filter(q => !deck.used.has(q));
     if (fresh.length === 0) {
-      this._used.clear();
-      // 只在新一轮的首抽避开上一轮末题，它仍可在本轮后续抽到。
-      fresh = this.size === 1 ? this.questions : this.questions.filter(q => q !== this._lastQuestion);
+      deck.used.clear();
+      fresh = deck.pool.length === 1 ? deck.pool : deck.pool.filter(q => q !== deck.last);
     }
     // 标签优先：优先从带匹配标签的未出题里抽
     let candidates = fresh;
@@ -99,9 +114,9 @@ export class QuizBank {
       if (tagged.length) candidates = tagged;
     }
     const q = candidates[Math.floor(Math.random() * candidates.length)];
-    this._used.add(q);
-    this._lastQuestion = q;
-    return { ...q };
+    deck.used.add(q);
+    deck.last = q;
+    return { ...q, timeLimit: secondsFor(q, difficulty) };
   }
 
   /**
@@ -116,7 +131,7 @@ export class QuizBank {
   }
 }
 
-/** 门禁结果展示时长（秒）：答对/答错/超时后高亮选项再关闭遮罩 */
+/** 答对后自动返回战场的反馈时长（秒）。 */
 export const DEFAULT_RESOLVE_DELAY = 0.8;
 
 /**
@@ -144,8 +159,9 @@ export class QuizGate {
     this._onClose = onClose || (() => {});
     this.resolveDelay = resolveDelay;
 
-    this.phase = 'idle';        // idle | active | feedback
+    this.phase = 'idle';        // idle | active | feedback（成功后自动关闭）| review（等待阅读）
     this.key = null;            // 待升级键（damage/fireRate/range）
+    this.difficulty = undefined;
     this.question = null;       // 当前题目
     this.remaining = 0;         // 剩余答题秒数
     this._feedbackTimer = 0;
@@ -167,14 +183,24 @@ export class QuizGate {
    * @param {string} key 升级键（damage/fireRate/range）
    * @returns {boolean} 是否成功开启
    */
-  open(key) {
+  open(key, difficulty) {
     if (this.isOpen) return false;
+    return this._startQuestion(key, difficulty);
+  }
+
+  retry() {
+    if (this.phase !== 'review') return false;
+    return this._startQuestion(this.key, this.difficulty);
+  }
+
+  _startQuestion(key, difficulty) {
     if (!this.upgrades.canBuy(key)) return false;
     const cost = this.upgrades.getCost(key);
     if (!this.economy.canAfford(cost)) return false;
 
     this.key = key;
-    this.question = this.bank.drawQuestion({ tags: [key] });
+    this.difficulty = difficulty;
+    this.question = this.bank.drawQuestion({ tags: [key], difficulty });
     this.remaining = this.question.timeLimit;
     this.phase = 'active';
     this.lastResult = null;
@@ -220,14 +246,11 @@ export class QuizGate {
   /** 防御性兜底：非 idle 时强制结束并 onClose（如重开时调用） */
   close() {
     if (this.phase === 'idle') return;
-    this.phase = 'idle';
-    this.key = null;
-    this.question = null;
-    this._onClose();
+    this._close();
   }
 
   _enterFeedback(result) {
-    this.phase = 'feedback';
+    this.phase = result.correct ? 'feedback' : 'review';
     this._feedbackTimer = this.resolveDelay;
     this._onResolve(result);
   }
@@ -235,6 +258,7 @@ export class QuizGate {
   _close() {
     this.phase = 'idle';
     this.key = null;
+    this.difficulty = undefined;
     this.question = null;
     this._onClose();
   }

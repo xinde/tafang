@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#162020">
   <title>余烬守卫 · Emberwatch</title>
   <link rel="icon" href="assets/img/base.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=music-repair">
+  <link rel="stylesheet" href="css/style.css?v=tactics">
 </head>
 <body>
   <header class="mast">
@@ -50,14 +50,23 @@
           </div>
           <div id="game-wrap"><canvas id="game-canvas" aria-label="战场，点击带加号的石台部署守卫"></canvas>
             <button id="resume" class="hidden">继续战斗 ▸</button>
+            <div id="boss-alert" class="boss-alert" hidden><strong id="boss-alert-name"></strong><span id="boss-countdown"></span><button id="interrupt-strike" class="small-button" hidden>冰冻打断</button></div>
+            <span id="boss-announce" class="sr-only" role="status"></span>
           </div>
-          <div class="map-caption"><span><i class="pad-key">+</i> 可建造塔位</span><span id="field-hint" role="status">选择守卫，点击石台部署</span><span id="hud-weather">晴朗</span></div>
+          <div class="map-caption"><span><i class="pad-key">+</i> 可建造塔位</span><span id="field-hint" role="status">选择守卫，点击石台部署</span><span id="range-readout" hidden></span><span id="hud-weather">晴朗</span></div>
+          <div id="guard-orders" class="guard-orders" hidden>
+            <b id="guard-status"></b><div role="group" aria-label="守卫攻击优先级">
+              <button class="small-button" data-target-mode="first">优先领头</button>
+              <button class="small-button" data-target-mode="nearest">优先最近</button>
+            </div><button id="close-orders" class="icon-button" aria-label="关闭守卫指挥"><svg class="icon"><use href="assets/img/icons.svg?v=music#close"/></svg></button>
+          </div>
         </div>
         <div class="forecast">
           <div class="forecast-art"><img id="forecast-portrait" alt="" width="42" height="42"></div>
           <div class="forecast-text"><div class="eyebrow" id="forecast-label"></div><h2 id="forecast-name"></h2><p id="forecast-detail"></p></div>
           <button id="btn-next-wave" class="primary"><svg class="icon"><use href="assets/img/icons.svg?v=music#play"/></svg><span>迎战</span></button>
         </div>
+        <p id="guard-challenge" class="challenge-line"></p>
       </section>
 
       <aside class="arsenal" aria-labelledby="arsenal-title">
@@ -72,12 +81,14 @@
           <button id="btn-unlock-magic" class="unlock hidden"></button>
         </div>
         <div id="upgrade-panel" class="hidden">
+          <label class="setting-line" for="quiz-difficulty">答题难度<select id="quiz-difficulty"><option value="easy">轻松</option><option value="standard" selected>标准</option><option value="challenge">挑战</option></select></label>
           <p class="shop-hint">答题成功后，强化会作用于所有守卫。</p>
           <button class="up-btn" data-up="damage"></button>
           <button class="up-btn" data-up="fireRate"></button>
           <button class="up-btn" data-up="range"></button>
         </div>
-        <div class="sell-row"><span>返还造价的 50%</span><button id="btn-sell" class="small-button" aria-pressed="false">出售守卫</button></div>
+        <div class="sell-row"><span id="sell-rate">出售返还 50%</span><button id="btn-sell" class="small-button" aria-pressed="false">出售守卫</button></div>
+        <p id="chosen-tactic" class="tactic-badge" hidden></p>
         <section class="skills" aria-labelledby="skills-title">
           <div class="skills-title"><h3 id="skills-title"><svg class="icon"><use href="assets/img/icons.svg?v=music#bolt"/></svg>战场技能</h3><span id="energy-count">0 / 100</span></div>
           <div class="energy-track"><span id="energy-fill"></span></div>
@@ -88,7 +99,7 @@
   </main>
 
   <dialog id="campaign-dialog" aria-labelledby="campaign-title">
-    <div class="dialog-head"><h2 id="campaign-title">战役地图</h2><button class="icon-button" data-close aria-label="关闭地图"><svg class="icon"><use href="assets/img/icons.svg?v=music#close"/></svg></button></div>
+    <div class="dialog-head"><h2 id="campaign-title">战役地图</h2><label class="setting-line" for="stage-pool">随机范围<select id="stage-pool"><option value="all">全部难度随机</option><option value="same">同难度随机</option></select></label><button class="icon-button" data-close aria-label="关闭地图"><svg class="icon"><use href="assets/img/icons.svg?v=music#close"/></svg></button></div>
     <div id="stage-list"></div>
     <div class="dialog-actions">
       <p id="campaign-note"></p>
@@ -98,11 +109,13 @@
   <dialog id="guide-dialog" aria-labelledby="guide-title">
     <div class="dialog-head"><h2 id="guide-title">玩法手册</h2><button class="icon-button" data-close aria-label="关闭手册"><svg class="icon"><use href="assets/img/icons.svg?v=music#close"/></svg></button></div>
     <dl class="guide">
-      <dt>随机或指定战场</dt><dd>从游戏首页进入会随机抽图，同一标签页一轮内不重复。想换地形，可在「战役地图」点「随机换一关」或自己挑选。结算后可以重试同一关。</dd>
+      <dt>随机战场与可选挑战</dt><dd>首次进入首页会从三张初阵图里抽一张。在「战役地图」可手选地图，或用「同难度随机」「全部难度随机」换关。每图有一枚挑战勋章，结算时按实际驻场峰值、漏怪数或提前迎战次数判断。</dd>
       <dt>守住旗帜</dt><dd>敌人从红旗进入，沿土路进攻城堡。漏敌会损失耐久，撑过最后一波即获胜。</dd>
-      <dt>在石台上布防</dt><dd>选择守卫，再点带加号的石台。弩手适合弯道，重炮擅长对付密集敌群。触屏按住空石台可预览射程，松手部署。</dd>
+      <dt>看路段，指挥守卫</dt><dd>选守卫后指向石台，浅绿色虚线标出射程内的敌军路线。手机按住预览，松手部署。射程够不到道路时，再点同一石台才会购买。点已部署的守卫，可切换「优先领头」或「优先最近」。</dd>
+      <dt>第二波后的战术</dt><dd>清完第二波会暂停整备。碎冰炮弹能用掉霜晶减速来扩大溅射，连射弩的第三次连续命中伤害翻倍，机动工坊把主动出售返还提高到 80%。每关选择一次。</dd>
       <dt>利用整备时间</dt><dd>迎战前可以查看敌群编成。两波之间提前迎战，按剩余时间奖励最多 8 金币。</dd>
-      <dt>强化与技能</dt><dd>击杀获得金币和能量。答对题目可购买全队强化。攒满 100 能量后，战斗中可以用「抢修」一次回满城堡和场上所有存活守卫的耐久，也可以选陨石、冰冻或淘金。设施全部完好时会保留能量。</dd>
+      <dt>答题与战场技能</dt><dd>在「全局强化」里独立选择轻松、标准或挑战。答错和超时可读解析、免费再答，答对才扣金币。击杀攒满 100 能量后可以释放陨石、冰冻、淘金或抢修。</dd>
+      <dt>应对首领</dt><dd>首领会标记最多两座守卫，蓄力两秒后每座损失 30 耐久。看见警示环时可以冰冻打断，也可以等待冲击后抢修，回满城堡和场上所有存活守卫。</dd>
       <dt>声音</dt><dd>顶部的「音乐」和「音效」分别开关。背景音乐从首次操作后开始，暂停战斗或切到后台时会暂停。</dd>
       <dt>快捷操作</dt><dd><kbd>1–7</kbd> 切换守卫，<kbd>Q W E R</kbd> 依次释放陨石、冰冻、淘金、抢修，<kbd>P</kbd> 暂停。右键或长按已部署守卫可出售。</dd>
     </dl>
@@ -111,10 +124,17 @@
     <div class="dialog-head"><h2 id="quiz-title">答题强化</h2><b id="quiz-timer">0s</b></div>
     <p id="quiz-upgrade-label" class="shop-hint"></p><h3 id="quiz-question"></h3><div id="quiz-options"></div>
     <p id="quiz-feedback" role="status"></p>
+    <div id="quiz-review" hidden><p id="quiz-explanation"></p><div class="dialog-actions"><button id="quiz-return" class="small-button" type="button">返回战场</button><button id="quiz-retry" aria-describedby="quiz-explanation" class="primary" type="button">免费再答</button></div></div>
+  </dialog>
+  <dialog id="tactic-dialog" aria-labelledby="tactic-title" aria-describedby="tactic-instructions">
+    <div class="dialog-head"><h2 id="tactic-title">选择本局战术</h2></div>
+    <p id="tactic-instructions">第二波已守住。选择一项，效果持续到本关结束。</p>
+    <div id="tactic-options"></div>
   </dialog>
   <dialog id="score-dialog" aria-labelledby="overlay-title">
     <div class="result-heading"><div id="score-medal"></div><div><p id="score-map" class="eyebrow"></p><h2 id="overlay-title"></h2></div></div>
     <p id="overlay-sub"></p>
+    <p id="score-challenge"></p>
     <div class="score-grid">
       <div><span>波次</span><b id="score-waves"></b></div><div><span>耐久</span><b id="score-lives"></b></div>
       <div><span>金币</span><b id="score-gold"></b></div><div><span>守卫</span><b id="score-towers"></b></div>
@@ -122,6 +142,6 @@
     <div class="result-actions"><button id="btn-share" class="small-button">复制战绩</button><button id="btn-restart" class="small-button">重试本关</button><button id="btn-continue" class="primary">下一关</button></div>
   </dialog>
   <audio id="background-music" preload="none" loop></audio>
-  <script type="module" src="js/main.js?v=music-repair"></script>
+  <script type="module" src="js/main.js?v=tactics"></script>
 </body>
 </html>

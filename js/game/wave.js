@@ -1,5 +1,6 @@
-import { Monster, MonsterType } from './monster.js';
+import { Monster, MonsterType } from './monster.js?v=tactics';
 import { audio } from '../engine/audio.js';
+import { BossStrike } from './boss-strike.js';
 
 // 进阶怪兽类型按 key 索引，供关卡配置 distribution 引用（type -> MonsterType）
 const ADVANCED_BY_KEY = {
@@ -21,6 +22,7 @@ export function campaignWaves(config, stage) {
     maxWaves: stage.waves.length,
     autoStartDelay: stage.rest,
     threat: stage.threat,
+    stageId: stage.id,
   };
 }
 
@@ -47,9 +49,11 @@ export class WaveManager {
     this._config = levelConfig;  // 关卡/波次配置
     this.combat = combat;        // 战斗上下文（soldiers 等）
     this.waveIndex = 0;          // 已开始的波数（0 = 尚未开波）
+    this.leaks = 0;              // 只记敌人冲过终点的次数，抢修不会改写本关记录
     this.maxWaves = levelConfig.maxWaves; // 通关波数
     /** @type {Monster[]} */
     this.active = [];            // 场上存活怪兽
+    this._bossStrikes = new Map();
     this._queue = [];            // 本波待生成的怪兽配置
     this._spawnTimer = 0;
     this.spawnInterval = levelConfig.spawnInterval;
@@ -70,6 +74,20 @@ export class WaveManager {
 
   get remainingEnemies() {
     return this._queue.length + this.active.length;
+  }
+
+  get bossWarnings() {
+    return [...this._bossStrikes.values()].filter(strike =>
+      strike.targets.length && strike.boss.alive && !strike.boss.reachedBase && this.active.includes(strike.boss))
+      .sort((a, b) => a.remaining - b.remaining);
+  }
+
+  interruptBossStrikes() {
+    let interrupted = 0;
+    for (const strike of this.bossWarnings) {
+      if (strike.interrupt()) interrupted++;
+    }
+    return interrupted;
   }
 
   get earlyBonus() {
@@ -223,7 +241,9 @@ export class WaveManager {
   startNextWave(economy) {
     if (this.isWaveInProgress()) return false;
     if (this.waveIndex >= this.maxWaves) return false;
+    if (this.combat?.tactics?.needsChoice(this)) return false;
     const bonus = this.earlyBonus;
+    this._bossStrikes.clear();
     this.waveIndex += 1;
     this._queue = this._buildWave(this.waveIndex);
     this.spawnInterval = this._config.orders?.[this.waveIndex - 1].interval ?? this._config.spawnInterval;
@@ -241,8 +261,9 @@ export class WaveManager {
    * @param {EffectManager} [effects] 可选，怪兽死亡/防御塔损毁时播放爆裂特效
    * @param {ProjectileManager} [projectiles] 弹道管理器（远程敌人开火入队）
    * @param {number} [monsterSpeedMul=1] 天气等外部因素对怪物速度的乘数（1=无影响）
+   * @param {boolean} [frozen=false] 全图冰冻打断首领冲击，并暂停施法时钟
    */
-  update(dt, economy, effects, projectiles, monsterSpeedMul = 1) {
+  update(dt, economy, effects, projectiles, monsterSpeedMul = 1, frozen = false) {
     // 1) 逐只生成
     if (this.spawning) {
       this._spawnTimer -= dt;
@@ -273,6 +294,13 @@ export class WaveManager {
       projectiles,
     };
     for (const m of this.active) {
+      if (m.key === 'boss' && m.alive && !m.reachedBase) {
+        if (!this._bossStrikes.has(m)) this._bossStrikes.set(m, new BossStrike(m, this._config.stageId));
+        if (this._bossStrikes.get(m).advance(dt, monsterCombat.soldiers, effects, frozen || m.freezeTimer > 0)) {
+          m.update(dt, {speedMul: 0});
+          continue;
+        }
+      }
       const speedMul = m.updateRanged(dt, monsterCombat); // 攻击中返回 moveFactor（缓慢移动）
       m.update(dt, { speedMul: speedMul * monsterSpeedMul });   // 边打边走，天气影响速度
     }
@@ -281,7 +309,9 @@ export class WaveManager {
     let killCount = 0;
     for (let i = this.active.length - 1; i >= 0; i--) {
       const m = this.active[i];
+      if (m.key === 'boss' && (m.reachedBase || !m.alive)) this._bossStrikes.delete(m);
       if (m.reachedBase) {
+        this.leaks++;
         economy.damageBase(1);
         audio.play('leak');
         this.active.splice(i, 1);
@@ -327,7 +357,7 @@ export class WaveManager {
 
     // 5) 波间隔：已开过至少一波、当前无波进行中、未打满、游戏未结束时自动开下一波
     if (this.waveIndex > 0 && this.waveIndex < this.maxWaves
-        && !this.isWaveInProgress() && !economy.isGameOver()) {
+        && !this.isWaveInProgress() && !economy.isGameOver() && !this.combat?.tactics?.needsChoice(this)) {
       this._interWaveTimer -= dt;
       if (this._interWaveTimer <= 0) this.startNextWave();
     }

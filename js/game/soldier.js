@@ -1,6 +1,7 @@
 import { CONFIG } from '../config.js';
 import { getWeapon, WeaponType } from './weapon.js';
-import { Projectile } from './projectile.js';
+import { Projectile } from './projectile.js?v=tactics';
+import { TACTICS } from './tactics.js';
 import { audio } from '../engine/audio.js';
 
 /**
@@ -93,7 +94,25 @@ export class Soldier {
     this.damage = w.damage;
     this.fireRate = w.fireRate;
     this.cost = w.cost;
+    this.volleyTarget = null;
+    this.volleyHits = 0;
     return w;
+  }
+
+  /** 在命中时计数。每名弩手单独追踪连击，换目标从第一箭开始。 */
+  volleyDamage(target, damage) {
+    if (this.volleyTarget !== target) {
+      this.volleyTarget = target;
+      this.volleyHits = 0;
+    }
+    this.volleyHits = (this.volleyHits + 1) % 3;
+    return this.volleyHits === 0 ? damage * TACTICS.volley.damageScale : damage;
+  }
+
+  setTargetMode(mode) {
+    if (mode !== TargetMode.FIRST && mode !== TargetMode.NEAREST) return false;
+    this.targetMode = mode;
+    return true;
   }
 
   /**
@@ -168,6 +187,7 @@ export class Soldier {
         radius: w.projRadius || 4,
         weaponType: w.type,
         hitSfx: w.hitSfx,
+        tactic: ctx.tactic,
         source: this,  // 记录开火者，击杀怪物后据此回血
       }));
     } else {

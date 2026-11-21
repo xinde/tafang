@@ -55,6 +55,23 @@ export class Renderer {
     this.ctx.drawImage(terrain, 0, 0, this.width, this.height);
   }
 
+  drawRoadCoverage(parts) {
+    if (!parts.length) return;
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (const [x1, y1, x2, y2] of parts) { ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); }
+    ctx.lineWidth = 13;
+    ctx.strokeStyle = '#224c43cf';
+    ctx.stroke();
+    ctx.setLineDash([9, 5]);
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#baf6bf';
+    ctx.stroke();
+    ctx.restore();
+  }
+
   /** 在指定网格绘制基地 */
   drawBase(col, row, opts = {}) {
     const { ctx, cellSize } = this;

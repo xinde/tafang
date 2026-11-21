@@ -2,6 +2,7 @@
   "maps": [
     {
       "id": "moss",
+      "challenge": {"type": "guards", "target": 4},
       "title": "苔桥前哨",
       "name": "蛇形通道",
       "difficulty": "初阵",
@@ -30,6 +31,7 @@
     },
     {
       "id": "mill",
+      "challenge": {"type": "early", "target": 2},
       "title": "风车麦田",
       "name": "麦垄长弯",
       "difficulty": "初阵",
@@ -58,6 +60,7 @@
     },
     {
       "id": "tide",
+      "challenge": {"type": "leaks", "target": 0},
       "title": "潮汐灯港",
       "name": "潮岸折道",
       "difficulty": "初阵",
@@ -87,6 +90,7 @@
     },
     {
       "id": "amber",
+      "challenge": {"type": "early", "target": 3},
       "title": "琥珀回廊",
       "name": "回旋弯路",
       "difficulty": "进阶",
@@ -117,6 +121,7 @@
     },
     {
       "id": "fen",
+      "challenge": {"type": "guards", "target": 4},
       "title": "萤火湿地",
       "name": "苇岸回环",
       "difficulty": "进阶",
@@ -147,6 +152,7 @@
     },
     {
       "id": "bamboo",
+      "challenge": {"type": "guards", "target": 4},
       "title": "翠竹山径",
       "name": "竹溪折返",
       "difficulty": "进阶",
@@ -177,6 +183,7 @@
     },
     {
       "id": "frost",
+      "challenge": {"type": "leaks", "target": 0},
       "title": "霜隙古道",
       "name": "双折捷径",
       "difficulty": "艰难",
@@ -203,6 +210,7 @@
     },
     {
       "id": "dunes",
+      "challenge": {"type": "early", "target": 2},
       "title": "赤砂驿道",
       "name": "沙梁三折",
       "difficulty": "艰难",
@@ -232,6 +240,7 @@
     },
     {
       "id": "quartz",
+      "challenge": {"type": "early", "target": 3},
       "title": "紫晶矿脉",
       "name": "矿车内环",
       "difficulty": "艰难",
@@ -260,6 +269,7 @@
     },
     {
       "id": "cinder",
+      "challenge": {"type": "early", "target": 3},
       "title": "烬火要塞",
       "name": "中央螺旋",
       "difficulty": "决战",
@@ -288,6 +298,7 @@
     },
     {
       "id": "cliff",
+      "challenge": {"type": "leaks", "target": 0},
       "title": "云崖栈桥",
       "name": "云上双栈",
       "difficulty": "决战",
@@ -318,6 +329,7 @@
     },
     {
       "id": "moon",
+      "challenge": {"type": "leaks", "target": 0},
       "title": "月蚀遗庭",
       "name": "断柱回廊",
       "difficulty": "决战",

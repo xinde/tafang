@@ -1,5 +1,6 @@
 import { paintRoutePreview } from './engine/terrain.js?v=12maps';
 import { UPGRADE_DEFS, UPGRADE_KEYS } from './game/upgrade.js';
+import { StageChallenge, challengeInfo } from './game/stage-challenge.js';
 
 const byId = id => document.getElementById(id);
 export const campaignDialog = byId('campaign-dialog');
@@ -18,17 +19,22 @@ function saveRank(id, grade) {
   }
 }
 
-function enterStage(stage) {
-  const url = new URL(location.href);
-  url.searchParams.set('stage', stage.id);
-  if (url.href === location.href) location.reload();
-  else location.assign(url.href);
-}
-
-export function initCampaign(stages, stage, hasProgress, drawRandom) {
+export function initCampaign(stages, stage, hasProgress, rotation) {
   const index = stages.indexOf(stage);
+  const challenge = new StageChallenge(stage, rotation.preferences);
+  const goals = stages.map(challengeInfo);
   let chosen = index;
   let returnToResult = false;
+  let leaving = false;
+  window.addEventListener('pageshow', () => { leaving = false; });
+  function enterStage(target) {
+    if (leaving) return;
+    leaving = true;
+    const url = new URL(location.href);
+    url.searchParams.set('stage', (target || rotation.select()).id);
+    if (url.href === location.href) location.reload();
+    else location.assign(url.href);
+  }
   byId('stage-landscape').src = stage.landscape;
   byId('chapter-number').textContent = '地图 ' + String(index + 1).padStart(2, '0') + ' / ' + String(stages.length).padStart(2, '0');
   byId('stage-title').textContent = stage.title;
@@ -36,14 +42,28 @@ export function initCampaign(stages, stage, hasProgress, drawRandom) {
   byId('stage-desc').textContent = stage.desc;
   document.title = stage.title + ' · 余烬守卫';
 
+  function refreshChallenge() {
+    const el = byId('guard-challenge');
+    el.textContent = '可选勋章「' + challenge.info.title + '」 · ' + challenge.progress;
+    el.title = '可选目标 · ' + challenge.info.goal;
+    el.classList.toggle('challenge-missed', challenge.info.type !== 'early' && !challenge.qualified);
+  }
+  refreshChallenge();
+  const scope = byId('stage-pool');
+  scope.value = rotation.scope;
+  scope.querySelector('[value="same"]').textContent = '同难度随机（' + stage.difficulty + '）';
+  scope.addEventListener('change', () => rotation.setScope(scope.value));
+
   function refreshChoice() {
     [...byId('stage-list').children].forEach((button, i) => {
       button.setAttribute('aria-pressed', String(i === chosen));
       const rank = bestRank(stages[i].id);
-      button.querySelector('.stage-record').textContent = rank ? '最佳 ' + rank : i === index ? '本关' : '';
+      button.querySelector('.stage-rank').textContent = rank ? '最佳 ' + rank : i === index ? '本关' : '';
+      button.querySelector('.stage-honor').hidden = !challenge.hasMedal(goals[i]);
     });
     byId('enter-stage').textContent = chosen === index ? '重新布防' : '进入关卡';
-    byId('campaign-note').textContent = hasProgress() ? '进入关卡将重新布防。' : stages[chosen].desc;
+    const briefing = hasProgress() ? '进入关卡将重新布防。' : stages[chosen].desc;
+    byId('campaign-note').textContent = briefing + ' ' + goals[chosen].goal + '，可获「' + goals[chosen].title + '」勋章。';
   }
   function openMap() {
     chosen = index;
@@ -59,6 +79,10 @@ export function initCampaign(stages, stage, hasProgress, drawRandom) {
           entry.difficulty + ' · ' + entry.waves.length + ' 波 · ' + entry.startGold + ' 初始金币</small>';
         const record = document.createElement('span');
         record.className = 'stage-record';
+        const rank = document.createElement('span'), honor = document.createElement('small');
+        rank.className = 'stage-rank'; honor.className = 'stage-honor';
+        honor.textContent = '★ ' + goals[i].title;
+        record.append(rank, honor);
         button.append(preview, text, record);
         button.addEventListener('click', () => { chosen = i; refreshChoice(); });
         list.append(button);
@@ -71,7 +95,7 @@ export function initCampaign(stages, stage, hasProgress, drawRandom) {
   byId('btn-campaign').addEventListener('click', openMap);
   byId('btn-guide').addEventListener('click', () => guideDialog.showModal());
   byId('enter-stage').addEventListener('click', () => enterStage(stages[chosen]));
-  byId('random-stage').addEventListener('click', () => enterStage(drawRandom()));
+  byId('random-stage').addEventListener('click', () => enterStage());
   document.querySelectorAll('[data-close]').forEach(button =>
     button.addEventListener('click', () => button.closest('dialog').close()));
   byId('btn-restart').addEventListener('click', () => enterStage(stage));
@@ -95,11 +119,15 @@ export function initCampaign(stages, stage, hasProgress, drawRandom) {
     }
   });
   byId('btn-continue').addEventListener('click', () => {
-    if (scoreDialog.dataset.win === 'true') enterStage(drawRandom());
+    if (scoreDialog.dataset.win === 'true') enterStage();
     else { returnToResult = true; scoreDialog.close(); openMap(); }
   });
 
-  return function showResult(won, { waves, economy, soldiers, upgrades }) {
+  function showResult(won, { waves, economy, soldiers, upgrades }) {
+    challenge.recordLeaks(waves.leaks);
+    challenge.recordDeployment(soldiers.getAll().filter(soldier => soldier.alive).length);
+    refreshChallenge();
+    const earned = challenge.finish(won);
     const { gold, baseLives } = economy;
     const wave = waves.waveIndex + '/' + waves.maxWaves;
     const lives = baseLives + '/' + economy.maxLives;
@@ -120,10 +148,19 @@ export function initCampaign(stages, stage, hasProgress, drawRandom) {
     byId('score-lives').textContent = lives;
     byId('score-gold').textContent = gold;
     byId('score-towers').textContent = towerCount;
+    const medalResult = (earned ? '★ 获得勋章' : '本局未达成') + '「' + challenge.info.title + '」 · ' + challenge.progress;
+    byId('score-challenge').textContent = medalResult;
+    byId('score-challenge').classList.toggle('challenge-earned', earned);
     scoreDialog.dataset.win = String(won);
     byId('btn-continue').textContent = won ? '随机下一关' : '战役地图';
     report = ['余烬守卫 · ' + stage.title, byId('overlay-title').textContent + ' · ' + grade,
-      '波次 ' + wave + '　耐久 ' + lives, '金币 ' + gold + '　守卫 ' + towerCount].join('\n');
+      '波次 ' + wave + '　耐久 ' + lives, '金币 ' + gold + '　守卫 ' + towerCount, medalResult].join('\n');
     scoreDialog.showModal();
+  }
+  return {
+    showResult,
+    recordDeployment(count) { if (challenge.recordDeployment(count)) refreshChallenge(); },
+    recordEarlyWave() { if (challenge.recordEarlyWave()) refreshChallenge(); },
+    recordLeaks(count) { if (challenge.recordLeaks(count)) refreshChallenge(); },
   };
 }
