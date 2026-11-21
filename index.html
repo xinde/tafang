@@ -1,160 +1,122 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="theme-color" content="#0f0f1e" />
-  <title>塔防游戏</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#162020">
+  <title>余烬守卫 · Emberwatch</title>
+  <link rel="icon" href="assets/img/base.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css?v=12maps">
 </head>
 <body>
-  <div id="app">
-    <div id="game-wrap">
-      <canvas id="game-canvas"></canvas>
-      <div id="hud">
-        <div id="hud-stats">
-          <span class="hud-stat is-gold" id="hud-gold" title="金币">
-            <svg class="hud-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#ffd24a" stroke="#a87800" stroke-width="1.6"/><circle cx="12" cy="12" r="4.8" fill="none" stroke="#a87800" stroke-width="1.3"/><path d="M12 7.2 L13.3 10.6 L16.9 10.6 L13.9 12.9 L15.1 16.4 L12 14.2 L8.9 16.4 L10.1 12.9 L7.1 10.6 L10.7 10.6 Z" fill="#a87800"/></svg>
-            <span class="hud-val">0</span>
-          </span>
-          <span class="hud-stat is-lives" id="hud-lives" title="基地生命">
-            <svg class="hud-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.9-7.5-10.4C4.5 7.5 7 5 9.5 5c1.7 0 3 .9 3.5 2 .5-1.1 1.8-2 3.5-2 2.5 0 5 2.5 5 5.6 0 5.5-7.5 10.4-7.5 10.4z" fill="#e05555" stroke="#8a2a2a" stroke-width="1.3"/></svg>
-            <span class="hud-val">0</span>
-          </span>
-          <span class="hud-stat is-wave" id="hud-wave" title="波次">
-            <svg class="hud-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v18" stroke="#cfcfcf" stroke-width="1.8" stroke-linecap="round"/><path d="M6 4h12l-2.8 3.6L18 11H6z" fill="#5a8ad0" stroke="#2a4a8a" stroke-width="1.2"/></svg>
-            <span class="hud-val">0/0</span>
-            <span class="hud-sub"></span>
-          </span>
-          <span class="hud-stat is-map" id="hud-map" title="地图">
-            <svg class="hud-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z" fill="none" stroke="#8a7a5a" stroke-width="1.5"/><path d="M9 3v15M15 6v15" fill="none" stroke="#8a7a5a" stroke-width="1"/></svg>
-            <span class="hud-val" id="hud-map-name">--</span>
-          </span>
-          <span class="hud-stat is-weather hidden" id="hud-weather" title="天气">
-            <span class="weather-icon">☀️</span>
-            <span class="weather-name">晴朗</span>
-            <span class="weather-timer">0s</span>
-          </span>
-        </div>
-        <div id="hud-actions">
-          <button id="btn-next-wave">开始下一波</button>
-          <div id="ultimate-bar">
-            <button id="btn-ult-meteor" class="ult-btn" data-ult="meteor" title="陨石雨（Q）" disabled>
-              <span class="ult-icon">☄️</span>
-              <span class="ult-energy-bar"><span class="ult-energy-fill"></span></span>
-            </button>
-            <button id="btn-ult-freeze" class="ult-btn" data-ult="freeze" title="全图冰冻（W）" disabled>
-              <span class="ult-icon">❄️</span>
-              <span class="ult-energy-bar"><span class="ult-energy-fill"></span></span>
-            </button>
-            <button id="btn-ult-gold" class="ult-btn" data-ult="gold_rush" title="金币狂暴（E）" disabled>
-              <span class="ult-icon">💰</span>
-              <span class="ult-energy-bar"><span class="ult-energy-fill"></span></span>
-            </button>
-          </div>
-          <button id="btn-sell" class="sell-btn" aria-pressed="false" title="出售模式：长按士兵出售（移动端）">出售</button>
-          <button id="btn-panel" class="panel-toggle" title="切换面板">面板</button>
-          <button id="btn-mute" class="mute-btn" aria-pressed="false" title="开关音效">静音</button>
-        </div>
-      </div>
-      <div id="overlay" class="hidden">
-        <div class="score-card" id="score-card">
-          <div class="score-hero">
-            <div class="score-rank-mark" id="score-medal">S</div>
-            <h2 class="score-title" id="overlay-title">游戏结束</h2>
-            <p class="score-subtitle" id="overlay-sub"></p>
-          </div>
-          <div class="score-grid">
-            <div class="score-item">
-              <span class="score-label">波次</span>
-              <span class="score-value" id="score-waves">0</span>
-            </div>
-            <div class="score-item">
-              <span class="score-label">金币</span>
-              <span class="score-value" id="score-gold">0</span>
-            </div>
-            <div class="score-item">
-              <span class="score-label">基地</span>
-              <span class="score-value" id="score-lives">0</span>
-            </div>
-            <div class="score-item">
-              <span class="score-label">塔数</span>
-              <span class="score-value" id="score-towers">0</span>
-            </div>
-          </div>
-          <div class="score-grade-section">
-            <span class="score-grade-label">综合评分</span>
-            <span class="score-grade" id="score-grade">--</span>
-          </div>
-          <div class="score-map-info">
-            <span class="score-map-label">地图</span>
-            <span class="score-map-name" id="score-map">--</span>
-          </div>
-          <div class="score-actions">
-            <button id="btn-share" class="btn-share">复制战绩</button>
-            <button id="btn-restart" class="btn-restart">再来一局</button>
-          </div>
-        </div>
-      </div>
+  <header class="mast">
+    <div class="mast-inner">
+      <div class="brand"><img src="assets/img/base.svg" width="38" height="38" alt=""><div><strong>余烬守卫</strong><span lang="en">EMBERWATCH</span></div></div>
+      <nav aria-label="游戏菜单">
+        <button id="btn-campaign" class="nav-button"><svg class="icon"><use href="assets/img/icons.svg#map"/></svg>战役地图</button>
+        <button id="btn-guide" class="nav-button" aria-label="玩法手册"><svg class="icon"><use href="assets/img/icons.svg#book"/></svg><span>玩法手册</span></button>
+        <button id="btn-mute" class="icon-button" aria-label="静音" title="静音" aria-pressed="false"><svg class="icon"><use href="assets/img/icons.svg#sound"/></svg></button>
+      </nav>
     </div>
+  </header>
 
-    <div id="quiz-overlay" class="hidden" aria-hidden="true">
-      <div class="quiz-card" role="dialog" aria-label="升级答题">
-        <div class="quiz-head">
-          <span class="quiz-title">答题升级</span>
-          <span class="quiz-timer" id="quiz-timer">0s</span>
+  <main class="command-room">
+    <section class="stage-banner" aria-labelledby="stage-title">
+      <img id="stage-landscape" class="stage-landscape" alt="" decoding="async">
+      <div class="banner-copy">
+        <p class="chapter-line"><svg class="icon"><use href="assets/img/icons.svg#flag"/></svg><span id="chapter-number"></span><span class="chapter-line-rule"></span><span id="stage-difficulty"></span></p>
+        <h1 id="stage-title"></h1>
+        <p id="stage-desc"></p>
+      </div>
+    </section>
+
+    <div class="battle-layout">
+      <section class="battle-column" aria-label="战场">
+        <div class="battle-frame">
+          <div class="status-bar">
+            <div id="phase" class="phase"><i></i><span>布防中</span></div>
+            <div class="stats">
+              <span id="hud-gold" class="stat gold" title="可用金币"><svg class="icon"><use href="assets/img/icons.svg#coin"/></svg><span class="stat-label">金币</span><b></b></span>
+              <span id="hud-lives" class="stat" title="基地耐久"><svg class="icon"><use href="assets/img/icons.svg#heart"/></svg><span class="stat-label">耐久</span><b></b></span>
+              <span id="hud-wave" class="stat" title="当前波次"><svg class="icon"><use href="assets/img/icons.svg#flag"/></svg><span class="stat-label">波次</span><b></b></span>
+            </div>
+            <div class="time-controls">
+              <button id="btn-speed" class="compact" aria-label="切换战斗速度"><svg class="icon"><use href="assets/img/icons.svg#fast"/></svg><b>1×</b></button>
+              <button id="btn-pause" class="compact" aria-label="暂停" title="暂停（P）" aria-pressed="false"><svg class="icon"><use href="assets/img/icons.svg#pause"/></svg></button>
+            </div>
+          </div>
+          <div id="game-wrap"><canvas id="game-canvas" aria-label="战场，点击带加号的石台部署守卫"></canvas>
+            <button id="resume" class="hidden">继续战斗 ▸</button>
+          </div>
+          <div class="map-caption"><span><i class="pad-key">+</i> 可建造塔位</span><span id="field-hint" role="status">选择守卫，点击石台部署</span><span id="hud-weather">晴朗</span></div>
         </div>
-        <p class="quiz-upgrade-label" id="quiz-upgrade-label"></p>
-        <p class="quiz-question" id="quiz-question">题干…</p>
-        <div class="quiz-options" id="quiz-options"></div>
-        <p class="quiz-feedback" id="quiz-feedback" aria-live="polite"></p>
-      </div>
+        <div class="forecast">
+          <div class="forecast-art"><img id="forecast-portrait" alt="" width="42" height="42"></div>
+          <div class="forecast-text"><div class="eyebrow" id="forecast-label"></div><h2 id="forecast-name"></h2><p id="forecast-detail"></p></div>
+          <button id="btn-next-wave" class="primary"><svg class="icon"><use href="assets/img/icons.svg#play"/></svg><span>迎战</span></button>
+        </div>
+      </section>
+
+      <aside class="arsenal" aria-labelledby="arsenal-title">
+        <div class="arsenal-heading"><svg class="icon"><use href="assets/img/icons.svg#sword"/></svg><h2 id="arsenal-title">守备工坊</h2></div>
+        <div class="shop-tabs" aria-label="工坊面板">
+          <button id="tab-deploy" aria-pressed="true" aria-controls="deploy-panel">部署守卫</button>
+          <button id="tab-upgrade" aria-pressed="false" aria-controls="upgrade-panel">全局强化</button>
+        </div>
+        <div id="deploy-panel">
+          <div id="weapon-grid" aria-label="可选守卫"></div>
+          <div id="weapon-desc" class="weapon-detail"></div>
+          <button id="btn-unlock-magic" class="unlock hidden"></button>
+        </div>
+        <div id="upgrade-panel" class="hidden">
+          <p class="shop-hint">答题成功后，强化会作用于所有守卫。</p>
+          <button class="up-btn" data-up="damage"></button>
+          <button class="up-btn" data-up="fireRate"></button>
+          <button class="up-btn" data-up="range"></button>
+        </div>
+        <div class="sell-row"><span>返还造价的 50%</span><button id="btn-sell" class="small-button" aria-pressed="false">出售守卫</button></div>
+        <section class="skills" aria-labelledby="skills-title">
+          <div class="skills-title"><h3 id="skills-title"><svg class="icon"><use href="assets/img/icons.svg#bolt"/></svg>战场技能</h3><span id="energy-count">0 / 100</span></div>
+          <div class="energy-track"><span id="energy-fill"></span></div>
+          <div id="ultimate-bar"></div>
+        </section>
+      </aside>
     </div>
+  </main>
 
-    <aside id="side-panel">
-      <div class="panel-section upgrade-panel">
-        <h3>全局强化</h3>
-        <p class="panel-caption">作用于全部已部署与后续士兵</p>
-        <button class="up-btn" data-up="damage"></button>
-        <button class="up-btn" data-up="fireRate"></button>
-        <button class="up-btn" data-up="range"></button>
-      </div>
-
-      <div class="panel-section">
-        <h3>武器选择</h3>
-        <p class="panel-caption">点击卡片选择，1-7 快捷切换</p>
-        <div class="weapon-grid" id="weapon-grid"></div>
-        <button id="btn-unlock-magic">解锁魔法塔 · 120金</button>
-        <p id="weapon-desc" class="hint"></p>
-      </div>
-
-      <div class="panel-section tip">
-        <h3>操作说明</h3>
-        <p>点击空地放置当前武器士兵</p>
-        <p>右键点击士兵出售（返还 50% 金币）</p>
-        <p>移动端：长按士兵出售</p>
-        <p>1/2/3/4/5/6/7 切换武器</p>
-        <p>击杀怪兽得金币，漏怪扣基地血</p>
-        <p>打满全部波次即胜利</p>
-      </div>
-    </aside>
-
-    <!-- 移动端底部操作栏 -->
-    <div id="mobile-bar" class="mobile-bar">
-      <div class="mobile-weapon-bar" id="mobile-weapon-bar"></div>
-      <div class="mobile-action-bar">
-        <button id="btn-ult-meteor-m" class="mb-btn mb-ult" data-ult="meteor" title="陨石雨" disabled>☄️</button>
-        <button id="btn-ult-freeze-m" class="mb-btn mb-ult" data-ult="freeze" title="冰冻" disabled>❄️</button>
-        <button id="btn-ult-gold-m" class="mb-btn mb-ult" data-ult="gold_rush" title="金币" disabled>💰</button>
-        <button id="btn-next-wave-m" class="mb-btn mb-wave">开始</button>
-        <button id="btn-sell-m" class="mb-btn mb-sell">出售</button>
-        <button id="btn-panel-m" class="mb-btn mb-panel">升级</button>
-        <button id="btn-mute-m" class="mb-btn mb-mute">🔊</button>
-      </div>
+  <dialog id="campaign-dialog" aria-labelledby="campaign-title">
+    <div class="dialog-head"><h2 id="campaign-title">战役地图</h2><button class="icon-button" data-close aria-label="关闭地图"><svg class="icon"><use href="assets/img/icons.svg#close"/></svg></button></div>
+    <div id="stage-list"></div>
+    <div class="dialog-actions">
+      <p id="campaign-note"></p>
+      <div class="stage-actions"><button id="random-stage" class="small-button">随机换一关</button><button id="enter-stage" class="primary">进入关卡</button></div>
     </div>
-  </div>
-  <script type="module" src="js/main.js"></script>
+  </dialog>
+  <dialog id="guide-dialog" aria-labelledby="guide-title">
+    <div class="dialog-head"><h2 id="guide-title">玩法手册</h2><button class="icon-button" data-close aria-label="关闭手册"><svg class="icon"><use href="assets/img/icons.svg#close"/></svg></button></div>
+    <dl class="guide">
+      <dt>随机或指定战场</dt><dd>从游戏首页进入会随机抽图，同一标签页一轮内不重复。想换地形，可在「战役地图」点「随机换一关」或自己挑选。结算后可以重试同一关。</dd>
+      <dt>守住旗帜</dt><dd>敌人从红旗进入，沿土路进攻城堡。漏敌会损失耐久，撑过最后一波即获胜。</dd>
+      <dt>在石台上布防</dt><dd>选择守卫，再点带加号的石台。弩手适合弯道，重炮擅长对付密集敌群。触屏按住空石台可预览射程，松手部署。</dd>
+      <dt>利用整备时间</dt><dd>迎战前可以查看敌群编成。两波之间提前迎战，按剩余时间奖励最多 8 金币。</dd>
+      <dt>强化与技能</dt><dd>击杀获得金币和能量。答对题目可购买全队强化。能量满后，战斗中任选一种战场技能。</dd>
+      <dt>快捷操作</dt><dd><kbd>1–7</kbd> 切换守卫，<kbd>Q W E</kbd> 释放技能，<kbd>P</kbd> 暂停。右键或长按已部署守卫可出售。</dd>
+    </dl>
+  </dialog>
+  <dialog id="quiz-dialog" aria-labelledby="quiz-title">
+    <div class="dialog-head"><h2 id="quiz-title">答题强化</h2><b id="quiz-timer">0s</b></div>
+    <p id="quiz-upgrade-label" class="shop-hint"></p><h3 id="quiz-question"></h3><div id="quiz-options"></div>
+    <p id="quiz-feedback" role="status"></p>
+  </dialog>
+  <dialog id="score-dialog" aria-labelledby="overlay-title">
+    <div class="result-heading"><div id="score-medal"></div><div><p id="score-map" class="eyebrow"></p><h2 id="overlay-title"></h2></div></div>
+    <p id="overlay-sub"></p>
+    <div class="score-grid">
+      <div><span>波次</span><b id="score-waves"></b></div><div><span>耐久</span><b id="score-lives"></b></div>
+      <div><span>金币</span><b id="score-gold"></b></div><div><span>守卫</span><b id="score-towers"></b></div>
+    </div>
+    <div class="result-actions"><button id="btn-share" class="small-button">复制战绩</button><button id="btn-restart" class="small-button">重试本关</button><button id="btn-continue" class="primary">下一关</button></div>
+  </dialog>
+  <script type="module" src="js/main.js?v=12maps"></script>
 </body>
 </html>

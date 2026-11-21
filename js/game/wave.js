@@ -11,6 +11,19 @@ const ADVANCED_BY_KEY = {
   archer: MonsterType.ARCHER,
 };
 
+const TYPES_BY_KEY = Object.fromEntries(Object.values(MonsterType).map(type => [type.key, type]));
+
+/** 将地图的编队顺序与共用的怪物模板组合。预告和实际生成使用同一份编队。 */
+export function campaignWaves(config, stage) {
+  return {
+    ...config,
+    orders: stage.waves.map(key => config.formations[key]),
+    maxWaves: stage.waves.length,
+    autoStartDelay: stage.rest,
+    threat: stage.threat,
+  };
+}
+
 /**
  * WaveManager：按波生成怪兽并驱动其移动与结算。
  * - startNextWave() 由“开始下一波”按钮或波间隔自动触发。
@@ -55,6 +68,15 @@ export class WaveManager {
     return this._interWaveTimer;
   }
 
+  get remainingEnemies() {
+    return this._queue.length + this.active.length;
+  }
+
+  get earlyBonus() {
+    if (!this.waveIndex || this.waveIndex >= this.maxWaves || this.isWaveInProgress()) return 0;
+    return Math.min(8, Math.ceil(Math.max(0, this.nextWaveIn) / 2));
+  }
+
   /** 是否已通关：打满 maxWaves 且最后一波已清空 */
   get isVictory() {
     return this.waveIndex >= this.maxWaves && !this.isWaveInProgress();
@@ -82,6 +104,16 @@ export class WaveManager {
     const rewardBonus = Math.floor((index - 1) / g.rewardBonusEveryWaves); // 高波金币略增
     const armorBonus = Math.floor((index - 1) / g.armorBonusEveryWaves);   // 护甲随波缓慢增长
     const dmgScale = 1 + (index - 1) * g.rangedDamagePerWave;    // 远程伤害递增（法师/BOSS）
+
+    if (cfg.orders) {
+      const order = cfg.orders[index - 1];
+      return order.groups.flatMap(([key, count]) =>
+        Array.from({ length: count }, () => this._makeMonster(
+          TYPES_BY_KEY[key], hpScale * cfg.threat, speedScale, rewardBonus, armorBonus,
+          dmgScale * cfg.threat,
+        ))
+      );
+    }
 
     const unlocked = {
       fast: index >= cfg.unlock.fast,
@@ -188,14 +220,17 @@ export class WaveManager {
    * 开始下一波。一波进行中或已打满 maxWaves 则忽略并返回 false。
    * @returns {boolean} 是否成功开波
    */
-  startNextWave() {
+  startNextWave(economy) {
     if (this.isWaveInProgress()) return false;
     if (this.waveIndex >= this.maxWaves) return false;
+    const bonus = this.earlyBonus;
     this.waveIndex += 1;
     this._queue = this._buildWave(this.waveIndex);
+    this.spawnInterval = this._config.orders?.[this.waveIndex - 1].interval ?? this._config.spawnInterval;
     this._spawnTimer = 0;
     this.spawning = true;
     this._interWaveTimer = this.autoStartDelay; // 本波清空后开始倒计时
+    if (economy && bonus) economy.earn(bonus);
     audio.play('wave_start');
     return true;
   }
@@ -228,12 +263,11 @@ export class WaveManager {
         x: bc.col * cs + cs / 2,
         y: bc.row * cs + cs / 2,
         lives: economy.baseLives,
-        // 基地受弹道伤害：远程怪弹道命中基地时按实际伤害扣血
+        // 城堡按耐久点结算，远程命中与漏过一只敌人的损失一致。
         alive: economy.baseLives > 0,
-        takeDamage: (amount) => {
-          const dmg = Math.max(1, Math.round(amount || 1));
-          economy.damageBase(dmg);
-          return dmg;
+        takeDamage: () => {
+          economy.damageBase(1);
+          return 1;
         },
       },
       projectiles,

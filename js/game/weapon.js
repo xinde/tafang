@@ -22,7 +22,7 @@ export const WeaponType = {
 export const WEAPONS = {
   [WeaponType.SWORD]: {
     type: WeaponType.SWORD,
-    name: '近战剑',
+    name: '近卫',
     tag: '近战',
     range: CONFIG.CELL_SIZE * 1.4,  // 攻击范围（像素）
     damage: 12,
@@ -35,7 +35,7 @@ export const WEAPONS = {
   },
   [WeaponType.ARROW]: {
     type: WeaponType.ARROW,
-    name: '弓箭',
+    name: '弩手',
     tag: '速射',
     range: CONFIG.CELL_SIZE * 3.5,
     damage: 7,
@@ -48,7 +48,7 @@ export const WEAPONS = {
   },
   [WeaponType.CANNON]: {
     type: WeaponType.CANNON,
-    name: '炮击',
+    name: '重炮',
     tag: '溅射',
     range: CONFIG.CELL_SIZE * 4.5,
     damage: 22,
@@ -62,7 +62,7 @@ export const WEAPONS = {
   },
   [WeaponType.MAGIC]: {
     type: WeaponType.MAGIC,
-    name: '魔法',
+    name: '秘术师',
     tag: '稳定',
     range: CONFIG.CELL_SIZE * 3.2,
     damage: 10,
@@ -75,7 +75,7 @@ export const WEAPONS = {
   },
   [WeaponType.SNIPER]: {
     type: WeaponType.SNIPER,
-    name: '狙击',
+    name: '穿甲弩',
     tag: '穿甲',
     range: CONFIG.CELL_SIZE * 5.5,  // 全场最远
     damage: 42,                     // 单发高伤
@@ -92,7 +92,7 @@ export const WEAPONS = {
   },
   [WeaponType.FROST]: {
     type: WeaponType.FROST,
-    name: '寒冰',
+    name: '霜晶',
     tag: '控制',
     range: CONFIG.CELL_SIZE * 3.0,
     damage: 5,                      // 低伤，定位控制辅助
@@ -109,7 +109,7 @@ export const WEAPONS = {
   },
   [WeaponType.STORM]: {
     type: WeaponType.STORM,
-    name: '雷霆',
+    name: '雷塔',
     tag: '连锁',
     range: CONFIG.CELL_SIZE * 3.0,
     damage: 9,

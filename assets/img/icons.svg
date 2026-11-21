@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" shape-rendering="crispEdges">
+  <symbol id="coin" viewBox="0 0 16 16"><path fill="#9c6339" d="M5 1h6v2h2v2h2v7h-2v2h-2v1H5v-1H3v-2H1V5h2V3h2z"/><path fill="#efb654" d="M5 1h5v1h2v2h2v6h-2v2h-2v1H5v-1H3v-2H2V5h1V3h2z"/><path fill="#ffe39a" d="M5 3h5v1H6v1H5v5H4V5h1z"/><path fill="#bb7e3b" d="M8 5h2v5H8z"/></symbol>
+  <symbol id="heart" viewBox="0 0 16 16"><path fill="#933f44" d="M2 3h4v1h3V3h4v1h2v6h-2v2h-2v2H9v1H7v-1H5v-2H3v-2H1V4h1z"/><path fill="#ed796e" d="M2 3h4v1h2v1h1V4h1V3h3v1h1v4h-1v2h-2v2H9v1H7v-1H5v-2H3V8H2z"/><path fill="#ffc0a3" d="M3 4h3v1H4v2H3z"/></symbol>
+  <symbol id="flag" viewBox="0 0 16 16"><path d="M2 1h2v14H2zM4 2h10v2h-2v2h2v2H4z"/></symbol>
+  <symbol id="map" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 3h2V2h2V1h1v1h3v1h2V2h2V1h2v12h-2v1h-2v1H9v-1H6v-1H4v1H2v1H1zm2 2v7l2-1V4zm4-1v7l3 1V5zm5 1v7l1-1V4z"/></symbol>
+  <symbol id="sound" viewBox="0 0 16 16"><path d="M1 6h3V5h2V3h2v10H6v-2H4v-1H1zM10 5h1v1h1v4h-1v1h-1V9h1V7h-1zM12 2h1v1h1v2h1v6h-1v2h-1v1h-1v-2h1v-2h1V6h-1V4h-1z"/></symbol>
+  <symbol id="mute" viewBox="0 0 16 16"><path d="M1 6h3V5h2V3h2v10H6v-2H4v-1H1zM10 5h1v1h1v1h1V6h1V5h1v2h-1v2h1v2h-1v-1h-1V9h-1v1h-1v1h-1V9h1V7h-1z"/></symbol>
+  <symbol id="book" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 2h5v1h4V2h5v11h-5v1H6v-1H1zm2 2v7h3v1h1V5H6V4zm6 1v7h1v-1h3V4h-3v1z"/></symbol>
+  <symbol id="sword" viewBox="0 0 16 16"><path d="M11 1h4v4h-1v1h-1v1h-1v1h-1v1h-1v1H8v1h1v2H7v-1H6v1H5v1H4v1H2v-2h1v-1h1v-1h1v-1H4V8h2v1h1V7h1V6h1V5h1V4h1z"/></symbol>
+  <symbol id="hammer" viewBox="0 0 16 16"><path d="M6 1h4v1h2v2h2v4h-3V7H9V6H8v2H7v2H6v1H5v2H4v1H3v1H1v-3h1v-1h1V9h1V8h1V6h1V5H4V4H3V3h2V2h1z"/></symbol>
+  <symbol id="play" viewBox="0 0 16 16"><path d="M4 2h2v1h2v2h2v1h2v1h2v2h-2v1h-2v1H8v2H6v1H4z"/></symbol>
+  <symbol id="pause" viewBox="0 0 16 16"><path d="M3 2h4v12H3zM10 2h4v12h-4z"/></symbol>
+  <symbol id="fast" viewBox="0 0 16 16"><path d="M1 3h2v1h2v2h2v1h1v2H7v1H5v2H3v1H1zM8 3h2v1h2v2h2v1h1v2h-1v1h-2v2h-2v1H8z"/></symbol>
+  <symbol id="close" viewBox="0 0 16 16"><path d="M2 2h2v2h2v2h4V4h2V2h2v2h-2v2h-2v4h2v2h2v2h-2v-2h-2v-2H6v2H4v2H2v-2h2v-2h2V6H4V4H2z"/></symbol>
+  <symbol id="lock" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M5 1h6v2h2v4h1v8H2V7h1V3h2zm1 2v1H5v3h6V4h-1V3zm1 6v3h2V9z"/></symbol>
+  <symbol id="bolt" viewBox="0 0 16 16"><path d="M9 0h4l-3 6h4v1L6 16H4l3-7H3V8z"/></symbol>
+  <symbol id="target" viewBox="0 0 16 16"><path d="M7 0h2v3H7zM7 13h2v3H7zM0 7h3v2H0zM13 7h3v2h-3zM5 2h2v2H5v1H4v2H2V5h1V3h2zm4 0h2v1h2v2h1v2h-2V5h-1V4H9zM2 9h2v2h1v1h2v2H5v-1H3v-2H2zm10 0h2v2h-1v2h-2v1H9v-2h2v-1h1zM7 7h2v2H7z"/></symbol>
+  <symbol id="star" viewBox="0 0 16 16"><path d="M7 1h2v3h1v2h5v2h-2v2h-2v2h1v3h-2v-1H8v-1H7v1H5v1H3v-3h1v-2H3V9H1V6h5V4h1z"/></symbol>
+</svg>

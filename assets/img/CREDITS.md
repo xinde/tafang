@@ -1,45 +1,30 @@
-# 图片素材来源与协议（assets/img/CREDITS.md）
+# 余烬守卫美术素材
 
-本项目所有图片均为**本地 SVG 文件**，运行时不引用任何远程 URL，避免网络问题导致游戏故障。
+画面和音效都随仓库分发，游戏运行时从本地加载。
 
-## 协议
+| 素材 | 用途与来源 |
+| --- | --- |
+| `turret_*.svg` | 七种守卫的像素精灵，战场与工坊使用同一幅画。角色转向时水平翻转。 |
+| `monster_*.svg` | 八种敌方精灵，按轮廓和配色区分。波次预告直接使用对应敌人的精灵。 |
+| `base.svg`、`icons.svg` | 城堡、金币、耐久、旗帜与界面按钮的像素图形。 |
+| `emberwatch.webp` | 用内置 ImageGen 为本项目生成的战役横幅。画面设定为 16 位像素黄昏山谷、暖光石塔、金色燕尾旗与分层松林，左侧给关卡标题留空。 |
+| `assets/img/scenes/*.webp` | 其余十一关的独立远景。内置 ImageGen 绘制 3 列 4 行的像素风景图集，按场景裁切、压缩，进入哪一关就下载哪一幅。 |
+| `js/engine/terrain.js` | 战场的麦垄、棕榈、芦苇、竹丛、仙人掌、晶簇、岩柱与古迹按关卡种子绘制。战场和地图册预览使用相同的路线与塔位。 |
 
-全部图片文件以 **CC0 1.0 Universal (Public Domain Dedication)** 发布。
-可自由复制、修改、发布、商用，无需署名。
-https://creativecommons.org/publicdomain/zero/1.0/
+SVG 素材沿用项目的 [CC0 1.0 声明](https://creativecommons.org/publicdomain/zero/1.0/)。
 
-## 来源说明
+<details>
+<summary>横幅的 ImageGen 生成提示词</summary>
 
-这些图片**未从外部素材站下载**，而是为本项目手工编写的 SVG（矢量图，纯文本 XML）。
-之所以采用手写 SVG 而非从 opengameart / kenney.nl 等站点下载位图：
-- 外部位图素材 URL 多有热链保护或需登录鉴权，无法在构建期可靠地程序化下载；
-- 手写 SVG 可离线维护、许可清晰（CC0 自有）、矢量缩放无锯齿（canvas drawImage 任意尺寸清晰）；
-- 可针对每种武器/怪兽定制视觉，与现有配色（weapon/monster color）保持一致。
+```text
+Use case: stylized-concept. Create an original horizontal panoramic 3:1 pixel art key visual for a retro Chinese-language tower defense game Emberwatch. Authentic deliberate 16-bit SNES landscape, as if the native resolution were 480 by 160, sharply defined chunky square 3–4 px clusters, carefully placed limited 24-color ramps, absolutely no smooth painted shading, no blur. Look across a forested valley at dusk. A solitary great square, warmly lit medieval stone watchtower with battlements, light glowing lantern windows, saffron swallowtail pennant, tall evergreen trees and a rocky outcrop is at 65 percent of the width; keep all important features within central half of the image height, fort seen from the side in the middle distance. The sky is peach apricot, terracotta, muted gold, with a few long horizontal clouds. Desaturated blue teal mountain silhouettes layer into middle distance, bleached sun, dark pine and indigo foreground trees frame edges. Leftmost 30 percent is quieter and darker, for an interface title to be overlaid separately. Screenprint-like composition, beautiful old game box illustration but physically pixelled at low resolution. Full bleed edge to edge. No lettering, text, seals, panels, UI, logo, borders or watermarks.
+```
 
-如需替换为下载的真实位图：将同名文件覆盖到本目录（支持 PNG/SVG，文件名保持一致即可），代码通过 js/engine/assets.js 的 manifest 映射引用，无需改业务代码。
+</details>
 
-## 图片清单
+<details>
+<summary>新场景远景的图集设定</summary>
 
-| 文件 | 用途 | 绘制位置 |
-|---|---|---|
-| turret_sword.svg | 近战剑塔（朝右） | renderer.drawSoldier 旋转绘制 |
-| turret_arrow.svg | 弓箭塔（朝右） | renderer.drawSoldier 旋转绘制 |
-| turret_cannon.svg | 炮塔（朝右） | renderer.drawSoldier 旋转绘制 |
-| turret_magic.svg | 魔法塔（朝右） | renderer.drawSoldier 旋转绘制 |
-| turret_sniper.svg | 狙击塔（朝右） | renderer.drawSoldier 旋转绘制 |
-| turret_frost.svg | 寒冰塔（朝右） | renderer.drawSoldier 旋转绘制 |
-| turret_storm.svg | 雷霆塔（朝右） | renderer.drawSoldier 旋转绘制 |
-| monster_normal.svg | 普通怪兽 | renderer.drawMonster |
-| monster_fast.svg | 快速怪兽 | renderer.drawMonster |
-| monster_tank.svg | 坦克怪兽 | renderer.drawMonster |
-| monster_swarm.svg | 虫群怪兽（成群弱小快速） | renderer.drawMonster |
-| monster_armored.svg | 装甲怪兽（带护甲减伤） | renderer.drawMonster |
-| monster_mage.svg | 法师怪兽（远程攻击防御塔/基地） | renderer.drawMonster |
-| monster_boss.svg | Boss（每 5 波出现一只，可远程） | renderer.drawMonster |
-| base.svg | 基地城堡 | renderer.drawBase |
+内置 ImageGen 绘制统一的 16 位像素全景图集，三列四行，无字无边框。第一行依次是黄昏林哨、金色麦田风车、红白灯塔与潮港。第二行是秋枫石桥、萤火柳泽、翠竹与朱桥。第三行是冰川哨所、砂岩驿站、紫晶矿井。第四行是熔岩城堡、云海吊桥、月下断拱。每格的地标靠右，保留地平线和清晰的建筑剪影。苔桥前哨继续使用原有横幅，其余十一格分别编码成 WebP。
 
-## 约定
-
-- 塔/炮塔 SVG 默认朝右（+x，angle=0 朝东），由 renderer 按 Soldier.angle 旋转后绘制，实现"随发射方向旋转"。
-- 怪兽 SVG 不旋转（对称造型，任意朝向均可读）。
-- 所有 SVG 均为 100x100 viewBox，含显式 width/height，确保 canvas drawImage 跨浏览器一致缩放。
+</details>

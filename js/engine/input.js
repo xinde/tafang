@@ -16,6 +16,7 @@ export class Input {
     this.cellSize = grid.cellSize;
     this.cols = grid.cols;
     this.rows = grid.rows;
+    this.sites = grid.sites;
 
     /** 当前悬停/预览的网格单元 {col,row}，不在画布内为 null */
     this.hoverCell = null;
@@ -40,7 +41,7 @@ export class Input {
 
     // ---- 吸格配置 ----
     this._snapTargets = [];          // 吸附目标格子 [{col,row}]，由 main.js 注入
-    this._SNAP_RADIUS = 1.5;         // 吸格检测半径（格数）
+    this._SNAP_RADIUS = 0.82;         // 触屏点击可略超出小石台的边缘
 
     canvas.addEventListener('click', (e) => this._handleClick(e));
     canvas.addEventListener('contextmenu', (e) => {
@@ -107,10 +108,11 @@ export class Input {
 
   /** 检查是否应该吸附到某个目标格子（基于像素距离） */
   _snapToTarget(col, row, x, y) {
-    if (this._snapTargets.length === 0) return null;
+    const targets = this.sites || this._snapTargets;
+    if (targets.length === 0) return null;
     let best = null;
     let bestDist = Infinity;
-    for (const t of this._snapTargets) {
+    for (const t of targets) {
       const cx = t.col * this.cellSize + this.cellSize / 2;
       const cy = t.row * this.cellSize + this.cellSize / 2;
       const d = Math.hypot(x - cx, y - cy);
@@ -160,8 +162,8 @@ export class Input {
     this.hoverCell = cell;
     if (this._onMove) this._onMove(cell);
 
-    // 启动 long-press 定时器（在已有塔上长按 = 出售）
-    if (cell) {
+    // 空地上按住可持续预览。只有已有塔可以长按出售。
+    if (cell && this._snapTargets.some(t => t.col === cell.col && t.row === cell.row)) {
       this._longPressTimer = setTimeout(() => {
         this._longPressFired = true;
         if (this._onRightClick) this._onRightClick(cell);
@@ -201,6 +203,7 @@ export class Input {
     if (this._longPressFired) {
       this._longPressFired = false;
       this._touchStartCell = null;
+      this.hoverCell = null;
       return;
     }
 
@@ -210,6 +213,7 @@ export class Input {
       this._onClick(cell);
     }
     this._touchStartCell = null;
+    this.hoverCell = null;
   }
 
   _handleTouchCancel() {

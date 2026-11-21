@@ -6,7 +6,7 @@
  * - FREEZE（全图冰冻）：所有怪物暂停移动 3 秒（冰冻状态）
  * - GOLD_RUSH（金币狂暴）：下波击杀奖励 ×2，持续到下次波间
  *
- * 能量上限 100，每次击杀 +2（BOSS +10）。满 100 后可释放。
+ * 能量上限 100，每次击杀 +4（BOSS +12）。满 100 后可释放。
  * 释放后能量清零，重新积累。
  *
  * 用法（main.js）：
@@ -54,8 +54,8 @@ export const ULTIMATE_DEFS = {
 };
 
 const ENERGY_MAX = 100;
-const ENERGY_PER_KILL = 2;
-const ENERGY_PER_BOSS = 10;
+const ENERGY_PER_KILL = 4;
+const ENERGY_PER_BOSS = 12;
 const METEOR_INTERVAL = 0.15; // 陨石生成间隔（秒）
 const METEOR_COUNT_PER_HIT = 3;
 const METEOR_DAMAGE = 40;

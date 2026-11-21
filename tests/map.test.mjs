@@ -68,7 +68,7 @@ test('不同地图产生不同路径长度', () => {
   for (const len of lengths) assert.ok(len > 0);
   // 至少有两张地图路径长度不同
   const unique = new Set(lengths);
-  assert.ok(unique.size >= 2, `4张地图路径长度应不完全相同，实际唯一值 ${unique.size} 个`);
+  assert.ok(unique.size >= 2, `地图路径长度应不完全相同，实际唯一值 ${unique.size} 个`);
 });
 
 test('所有预配置地图可正常构造且路径完整', () => {
@@ -100,6 +100,29 @@ test('getPathPosition：超过路径总长返回 done=true', () => {
   // 终点坐标 = 基地格中心
   assert.equal(p.x, 19 * 48 + 24);
   assert.equal(p.y, 9 * 48 + 24);
+});
+
+test('走满路线长度的这一帧就到达城堡', () => {
+  const map = new GameMap();
+  assert.equal(map.getPathPosition(map.getPathLength()).done, true);
+});
+
+test('地图拒绝自交路线和压在通道上的塔位', () => {
+  const waypoints = [[-1, 2], [6, 2], [6, 6], [3, 6], [3, 1]]
+    .map(([col, row]) => ({col, row}));
+  assert.throws(() => new GameMap({waypoints}), /道路重复/);
+  assert.throws(() => new GameMap({waypoints: waypoints.slice(0, 2), sites: [[2, 2]]}), /塔位/);
+});
+
+test('无效的斜线、零长段、越界坐标和重叠石台在建图时报告', () => {
+  const start = {col: -1, row: 2}, turn = {col: 5, row: 2};
+  for (const next of [{col: 8, row: 7}, turn, {col: 100, row: 2}, {col: 4.5, row: 2}]) {
+    assert.throws(() => new GameMap({waypoints: [start,turn,next]}), /道路/);
+  }
+  for (const sites of [[[1,3],[1,3]], [[-1,3]], [[5,2]]]) {
+    assert.throws(() => new GameMap({waypoints:[start,turn], sites}), /塔位/);
+  }
+  assert.throws(() => new GameMap({waypoints:[start,turn], baseCell:{col:1,row:1}}), /城堡/);
 });
 
 test('canPlace / occupy / release：路径格不可放置，空地可放置', () => {

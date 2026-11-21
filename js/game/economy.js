@@ -6,9 +6,10 @@ import { audio } from '../engine/audio.js';
  * combat/wave 模块通过 earn/spend/damageBase 与游戏结算联动。
  */
 export class Economy {
-  constructor() {
-    this.gold = CONFIG.START_GOLD;
-    this.baseLives = CONFIG.BASE_LIVES;
+  constructor({ startGold = CONFIG.START_GOLD, baseLives = CONFIG.BASE_LIVES } = {}) {
+    this.gold = startGold;
+    this.baseLives = baseLives;
+    this.maxLives = baseLives;
     this._listeners = new Set();
   }
 

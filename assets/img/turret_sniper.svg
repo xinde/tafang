@@ -1,11 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
-  <!-- 狙击塔：深色底座 + 长枪管 + 红色瞄准镜，默认朝右 -->
-  <circle cx="50" cy="50" r="26" fill="#2e3144" stroke="#141723" stroke-width="3"/>
-  <circle cx="50" cy="50" r="14" fill="#49506a" stroke="#1f2334" stroke-width="2"/>
-  <rect x="48" y="44" width="34" height="12" rx="4" fill="#e04848" stroke="#7a1d1d" stroke-width="2"/>
-  <rect x="55" y="47" width="27" height="6" rx="3" fill="#ff9b9b" opacity="0.65"/>
-  <rect x="60" y="37" width="16" height="6" rx="3" fill="#242938" stroke="#0f1320" stroke-width="1.5"/>
-  <circle cx="64" cy="40" r="2.4" fill="#ffe7c9"/>
-  <rect x="80" y="47" width="12" height="6" rx="3" fill="#f1d9c5"/>
-  <circle cx="50" cy="50" r="4" fill="#d7deff" opacity="0.65"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 16 16" shape-rendering="crispEdges">
+  <path fill="#1d2930" d="M5 0h4v1h-4z M4 1h1v1h-1z M9 1h1v1h-1z M3 2h1v1h-1z M10 2h1v1h-1z M2 3h1v1h-1z M6 3h1v1h-1z M11 3h1v1h-1z M2 4h1v1h-1z M5 4h1v1h-1z M9 4h3v1h-3z M3 5h2v1h-2z M6 5h1v1h-1z M9 5h1v1h-1z M12 5h1v1h-1z M14 5h2v1h-2z M4 6h1v1h-1z M8 6h1v1h-1z M10 6h2v1h-2z M3 7h1v1h-1z M6 7h1v1h-1z M9 7h1v1h-1z M14 7h2v1h-2z M2 8h1v1h-1z M6 8h1v1h-1z M12 8h2v1h-2z M2 9h1v1h-1z M5 9h1v1h-1z M10 9h2v1h-2z M2 10h1v1h-1z M6 10h2v1h-2z M9 10h2v1h-2z M3 11h1v1h-1z M9 11h1v1h-1z M3 12h1v1h-1z M6 12h1v1h-1z M9 12h1v1h-1z M3 13h1v1h-1z M6 13h1v1h-1z M9 13h1v1h-1z M2 14h2v1h-2z M6 14h2v1h-2z M10 14h1v1h-1z"/>
+  <path fill="#db7456" d="M5 1h4v1h-4z M4 2h3v1h-3z M8 2h2v1h-2z M3 3h2v1h-2z M9 3h2v1h-2z M3 4h1v1h-1z M4 8h1v1h-1z M4 9h1v1h-1z"/>
+  <path fill="#ad493e" d="M7 2h1v1h-1z M5 3h1v1h-1z M7 3h2v1h-2z M4 4h1v1h-1z M4 7h2v1h-2z M3 8h1v1h-1z M5 8h1v1h-1z M3 9h1v1h-1z M3 10h2v1h-2z M4 11h1v1h-1z"/>
+  <path fill="#edcca2" d="M6 4h2v1h-2z"/>
+  <path fill="#ccb898" d="M8 4h1v1h-1z M5 5h1v1h-1z M8 5h1v1h-1z M5 6h3v1h-3z M6 9h2v1h-2z"/>
+  <path fill="#21252e" d="M7 5h1v1h-1z"/>
+  <path fill="#6a8290" d="M13 5h1v1h-1z M12 6h1v1h-1z M14 6h1v1h-1z M10 7h1v1h-1z M12 7h2v1h-2z M9 8h3v1h-3z"/>
+  <path fill="#a6b8b7" d="M13 6h1v1h-1z M11 7h1v1h-1z M7 8h1v1h-1z"/>
+  <path fill="#495559" d="M15 6h1v1h-1z"/>
+  <path fill="#855447" d="M7 7h2v1h-2z M8 8h1v1h-1z M8 9h2v1h-2z M5 10h1v1h-1z M8 10h1v1h-1z M5 11h3v1h-3z M4 12h2v1h-2z M7 12h2v1h-2z M4 13h1v1h-1z M8 13h1v1h-1z M4 14h2v1h-2z M8 14h2v1h-2z"/>
+  <path fill="#453b3b" d="M8 11h1v1h-1z M5 13h1v1h-1z M7 13h1v1h-1z"/>
 </svg>

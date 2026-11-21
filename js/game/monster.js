@@ -14,37 +14,37 @@ export const MonsterType = {
   SWARM:   { key: 'swarm',   hp: 12,  speed: 120, reward: 2,  radius: 0.20, color: '#5ad07a', armor: 0 },
   ARMORED: { key: 'armored', hp: 60,  speed: 64,  reward: 10, radius: 0.36, color: '#5a8ad0', armor: 5 },
   MAGE:    { key: 'mage',    hp: 38,  speed: 52,  reward: 14, radius: 0.30, color: '#b46ae8', armor: 0, ranged: {
-    range: 240,          // 索敌/攻击射程（像素）
-    damage: 10,          // 单发弹道伤害（对塔 / 对基地）
+    range: 204,          // 索敌/攻击射程（像素）
+    damage: 7,          // 单发弹道伤害（对守卫）
     fireRate: 1.0,       // 每秒攻击次数
     projectileSpeed: 320,
     projColor: '#c98af5',
     projRadius: 5,
-    moveFactor: 0.35,    // 攻击期间移动速度比例（边打边走，不原地站桩）
+    moveFactor: 0.65,    // 攻击期间移动速度比例（边打边走，不原地站桩）
     healOnKill: 0.3,     // 击杀防御塔后按自身 maxHp 的 30% 回血（生命窃取）
     fireSfx: 'fire_magic',
     hitSfx: 'hit_magic',
   } },
   ARCHER:  { key: 'archer',  hp: 32,  speed: 68,  reward: 12, radius: 0.28, color: '#e8b84a', armor: 1, ranged: {
-    range: 260,          // 索敌/攻击射程（像素）
-    damage: 7,           // 单发弹道伤害（对塔 / 对基地）
+    range: 144,          // 索敌/攻击射程（像素）
+    damage: 5,           // 单发弹道伤害（对守卫）
     fireRate: 1.3,       // 每秒攻击次数（弓箭手射速较快）
     projectileSpeed: 360,
     projColor: '#f0d060',
     projRadius: 4,
-    moveFactor: 0.45,    // 攻击期间移动速度比例（边打边走，比法师稍快）
+    moveFactor: 0.78,    // 攻击期间移动速度比例（边打边走，比法师稍快）
     healOnKill: 0,       // 弓箭手无生命窃取
     fireSfx: 'fire_arrow',
     hitSfx: 'hit_arrow',
   } },
   BOSS:    { key: 'boss',    hp: 260, speed: 34,  reward: 60, radius: 0.52, color: '#b02030', armor: 5, ranged: {
-    range: 320,          // 攻击射程（像素）
-    damage: 18,          // 单发弹道伤害（对塔 / 对基地）
+    range: 168,          // 攻击射程（像素）
+    damage: 12,          // 单发弹道伤害（对守卫）
     fireRate: 0.6,       // 每秒攻击次数
     projectileSpeed: 260,
     projColor: '#ff8030',
     projRadius: 7,
-    moveFactor: 0.3,     // 攻击期间移动速度比例（BOSS 更慢）
+    moveFactor: 0.60,     // 攻击期间移动速度比例（BOSS 更慢）
     healOnKill: 0.2,     // 击杀防御塔后按自身 maxHp 的 20% 回血
     fireSfx: 'fire_cannon',
     hitSfx: 'hit_cannon',

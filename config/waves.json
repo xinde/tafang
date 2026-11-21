@@ -1,6 +1,7 @@
 {
   "_doc": {
-    "说明": "塔防关卡/波次配置。新增或调整关卡只改本文件，无需改动代码。波数从 1 开始。",
+    "说明": "战役按 maps.json 中每关的 waves 顺序读取 formations，预告和实际出兵共享数据。growth 控制随波成长，未指定编队时使用随机波次配置。",
+    "formations": "每个编队包含名称、出兵间隔 interval（秒）和有序 groups，每组是 [敌人类型, 数量]。",
     "maxWaves": "通关波数（打满即胜利）",
     "spawnInterval": "同波内相邻怪兽生成间隔（秒）",
     "autoStartDelay": "一波清空后自动开下一波的倒计时（秒）",
@@ -42,5 +43,39 @@
     { "type": "fast",    "every": 3, "offset": 2 }
   ],
   "boss": { "every": 5 },
-  "random": { "minWave": 2, "upgradeChance": 0.16, "extraMax": 3 }
+  "random": { "minWave": 2, "upgradeChance": 0.16, "extraMax": 3 },
+  "formations": {
+    "scouts": {"name": "林缘斥候", "interval": 0.92, "groups": [["normal", 5]]},
+    "runners": {"name": "疾驰小队", "interval": 0.65, "groups": [["normal", 3], ["fast", 4], ["normal", 2]]},
+    "swarm": {"name": "蝠群压境", "interval": 0.38, "groups": [["swarm", 8], ["normal", 3], ["swarm", 5]]},
+    "vanguard": {"name": "石甲先锋", "interval": 0.68, "groups": [["tank", 2], ["fast", 4], ["normal", 4]]},
+    "chieftain": {"name": "林地领主", "interval": 0.66, "groups": [["normal", 4], ["archer", 2], ["tank", 1], ["boss", 1]]},
+    "skirmish": {"name": "游击弓手", "interval": 0.62, "groups": [["normal", 4], ["archer", 3], ["fast", 5]]},
+    "stampede": {"name": "疾行兽潮", "interval": 0.36, "groups": [["fast", 6], ["swarm", 10], ["fast", 5]]},
+    "bulwark": {"name": "重甲纵队", "interval": 0.79, "groups": [["tank", 2], ["armored", 4], ["normal", 5], ["tank", 1]]},
+    "horde": {"name": "回廊围攻", "interval": 0.48, "groups": [["swarm", 9], ["armored", 3], ["archer", 3], ["boss", 1]]},
+    "outriders": {"name": "疾狼前锋", "interval": 0.52, "groups": [["fast", 5], ["normal", 4], ["fast", 3]]},
+    "hex": {"name": "咒术来袭", "interval": 0.72, "groups": [["tank", 2], ["mage", 3], ["normal", 5], ["mage", 1]]},
+    "ironmarch": {"name": "铁甲长阵", "interval": 0.62, "groups": [["armored", 5], ["archer", 3], ["tank", 3], ["fast", 5]]},
+    "frostlord": {"name": "冰原暴君", "interval": 0.56, "groups": [["fast", 7], ["mage", 3], ["armored", 4], ["boss", 1]]},
+    "siege": {"name": "远程围攻", "interval": 0.57, "groups": [["archer", 4], ["normal", 5], ["mage", 3], ["tank", 2]]},
+    "nightfall": {"name": "暗翼突袭", "interval": 0.34, "groups": [["swarm", 12], ["fast", 7], ["mage", 4], ["armored", 3]]},
+    "laststand": {"name": "余烬双王", "interval": 0.55, "groups": [["boss", 1], ["fast", 6], ["armored", 4], ["mage", 3], ["boss", 1]]},
+    "hayrun": {"name": "麦垄疾行", "interval": 0.65, "groups": [["normal", 4], ["fast", 3], ["normal", 2]]},
+    "harvest": {"name": "麦田守关者", "interval": 0.72, "groups": [["normal", 4], ["fast", 4], ["tank", 1], ["boss", 1]]},
+    "whitecaps": {"name": "浪尖追兵", "interval": 0.48, "groups": [["fast", 4], ["swarm", 6], ["tank", 1]]},
+    "tideking": {"name": "潮汐领主", "interval": 0.7, "groups": [["archer", 2], ["normal", 4], ["fast", 4], ["boss", 1]]},
+    "lanternswarm": {"name": "萤泽蝠潮", "interval": 0.46, "groups": [["swarm", 8], ["mage", 1], ["fast", 4], ["swarm", 5]]},
+    "bogwarden": {"name": "沼泽看守", "interval": 0.62, "groups": [["tank", 2], ["swarm", 6], ["mage", 2], ["boss", 1]]},
+    "reedbows": {"name": "竹影游弓", "interval": 0.65, "groups": [["archer", 2], ["normal", 5], ["archer", 2], ["fast", 3]]},
+    "jadeguard": {"name": "竹关铁卫", "interval": 0.62, "groups": [["armored", 3], ["fast", 6], ["archer", 2], ["boss", 1]]},
+    "sandwake": {"name": "沙脊伏兵", "interval": 0.5, "groups": [["armored", 2], ["fast", 6], ["tank", 1], ["fast", 3]]},
+    "duneking": {"name": "赤砂驼队", "interval": 0.64, "groups": [["tank", 2], ["armored", 3], ["mage", 2], ["boss", 1]]},
+    "shardwall": {"name": "晶甲长列", "interval": 0.73, "groups": [["armored", 3], ["archer", 2], ["tank", 2], ["normal", 4]]},
+    "geodelord": {"name": "晶核领主", "interval": 0.58, "groups": [["mage", 2], ["armored", 4], ["swarm", 6], ["boss", 1]]},
+    "gustwings": {"name": "云海掠翼", "interval": 0.33, "groups": [["swarm", 10], ["fast", 5], ["archer", 2]]},
+    "skywatch": {"name": "云崖围城", "interval": 0.51, "groups": [["armored", 3], ["boss", 1], ["archer", 3], ["fast", 6]]},
+    "moonlit": {"name": "月下巡阵", "interval": 0.54, "groups": [["archer", 3], ["tank", 2], ["mage", 2], ["normal", 5]]},
+    "eclipse": {"name": "月蚀双王", "interval": 0.58, "groups": [["boss", 1], ["mage", 2], ["fast", 5], ["armored", 4], ["boss", 1]]}
+  }
 }

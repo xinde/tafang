@@ -1,15 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
-  <!-- 虫群怪兽：绿色瘦小 + 多眼 + 细腿，成群出现 -->
-  <line x1="10" y1="40" x2="22" y2="44" stroke="#3a8a4a" stroke-width="2"/>
-  <line x1="10" y1="56" x2="22" y2="52" stroke="#3a8a4a" stroke-width="2"/>
-  <line x1="78" y1="40" x2="90" y2="44" stroke="#3a8a4a" stroke-width="2"/>
-  <line x1="78" y1="56" x2="90" y2="52" stroke="#3a8a4a" stroke-width="2"/>
-  <ellipse cx="50" cy="50" rx="22" ry="20" fill="#5ad07a" stroke="#2a6a3a" stroke-width="3"/>
-  <circle cx="40" cy="44" r="5" fill="#fff"/>
-  <circle cx="60" cy="44" r="5" fill="#fff"/>
-  <circle cx="50" cy="40" r="3.5" fill="#fff"/>
-  <circle cx="41" cy="45" r="2.5" fill="#1a1a1a"/>
-  <circle cx="61" cy="45" r="2.5" fill="#1a1a1a"/>
-  <circle cx="50" cy="41" r="1.8" fill="#1a1a1a"/>
-  <path d="M 42 60 L 46 64 L 50 60 L 54 64 L 58 60" fill="none" stroke="#1a4a2a" stroke-width="2"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 16 16" shape-rendering="crispEdges">
+  <path fill="#1d2930" d="M0 1h1v1h-1z M15 1h1v1h-1z M0 2h2v1h-2z M14 2h2v1h-2z M0 3h1v1h-1z M2 3h1v1h-1z M5 3h1v1h-1z M10 3h1v1h-1z M13 3h1v1h-1z M15 3h1v1h-1z M0 4h1v1h-1z M3 4h1v1h-1z M5 4h2v1h-2z M9 4h2v1h-2z M12 4h1v1h-1z M15 4h1v1h-1z M0 5h1v1h-1z M4 5h1v1h-1z M6 5h4v1h-4z M11 5h1v1h-1z M15 5h1v1h-1z M1 6h1v1h-1z M14 6h1v1h-1z M1 7h1v1h-1z M14 7h1v1h-1z M2 8h1v1h-1z M4 8h1v1h-1z M11 8h1v1h-1z M13 8h1v1h-1z M3 9h1v1h-1z M5 9h2v1h-2z M9 9h2v1h-2z M12 9h1v1h-1z M5 10h1v1h-1z M10 10h1v1h-1z M6 11h1v1h-1z M9 11h1v1h-1z M5 12h2v1h-2z M9 12h2v1h-2z M5 13h1v1h-1z M10 13h1v1h-1z"/>
+  <path fill="#805393" d="M1 3h1v1h-1z M14 3h1v1h-1z M1 4h1v1h-1z M14 4h1v1h-1z M1 5h2v1h-2z M5 5h1v1h-1z M10 5h1v1h-1z M13 5h2v1h-2z M2 6h2v1h-2z M5 6h2v1h-2z M9 6h2v1h-2z M12 6h2v1h-2z M2 7h3v1h-3z M6 7h1v1h-1z M9 7h1v1h-1z M11 7h3v1h-3z M3 8h1v1h-1z M5 8h1v1h-1z M7 8h2v1h-2z M10 8h1v1h-1z M12 8h1v1h-1z M7 9h2v1h-2z M6 10h1v1h-1z M9 10h1v1h-1z M7 11h2v1h-2z M7 12h2v1h-2z"/>
+  <path fill="#c990bc" d="M2 4h1v1h-1z M13 4h1v1h-1z M3 5h1v1h-1z M12 5h1v1h-1z M4 6h1v1h-1z M7 6h2v1h-2z M11 6h1v1h-1z M5 7h1v1h-1z M7 7h2v1h-2z M10 7h1v1h-1z"/>
+  <path fill="#ffe29a" d="M6 8h1v1h-1z M9 8h1v1h-1z"/>
+  <path fill="#fff0bf" d="M7 10h2v1h-2z"/>
 </svg>

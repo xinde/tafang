@@ -31,7 +31,8 @@ export class Renderer {
     const { ctx } = this;
     // 先重置变换，清空并填满整个画布（含等比缩放后的留白区域），避免残影
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = '#0f0f1e';
+    ctx.fillStyle = '#223634';
+    ctx.imageSmoothingEnabled = false;
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     // 再应用逻辑->显示变换，后续所有绘制使用逻辑坐标
     ctx.setTransform(this.viewScale, 0, 0, this.viewScale, this.viewOriginX, this.viewOriginY);
@@ -50,50 +51,8 @@ export class Renderer {
     };
   }
 
-  drawGrid() {
-    const { ctx, cellSize } = this;
-    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (let c = 0; c <= this.cols; c++) {
-      ctx.moveTo(c * cellSize, 0);
-      ctx.lineTo(c * cellSize, this.height);
-    }
-    for (let r = 0; r <= this.rows; r++) {
-      ctx.moveTo(0, r * cellSize);
-      ctx.lineTo(this.width, r * cellSize);
-    }
-    ctx.stroke();
-  }
-
-  /** 用一组路径点(网格坐标)绘制怪兽行进路径 */
-  drawPath(waypoints) {
-    const { ctx } = this;
-    if (!waypoints || waypoints.length < 2) return;
-
-    // 路径底色（加粗）
-    ctx.strokeStyle = '#5a4a2f';
-    ctx.lineWidth = this.cellSize * 0.7;
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    waypoints.forEach((wp, i) => {
-      const p = this.cellCenter(wp.col, wp.row);
-      if (i === 0) ctx.moveTo(p.x, p.y);
-      else ctx.lineTo(p.x, p.y);
-    });
-    ctx.stroke();
-
-    // 路径中线
-    ctx.strokeStyle = '#8a6d3b';
-    ctx.lineWidth = this.cellSize * 0.4;
-    ctx.beginPath();
-    waypoints.forEach((wp, i) => {
-      const p = this.cellCenter(wp.col, wp.row);
-      if (i === 0) ctx.moveTo(p.x, p.y);
-      else ctx.lineTo(p.x, p.y);
-    });
-    ctx.stroke();
+  drawTerrain(terrain) {
+    this.ctx.drawImage(terrain, 0, 0, this.width, this.height);
   }
 
   /** 在指定网格绘制基地 */
@@ -101,7 +60,10 @@ export class Renderer {
     const { ctx, cellSize } = this;
     const { x, y } = this.cellToPx(col, row);
     if (opts.image) {
-      ctx.drawImage(opts.image, x, y, cellSize, cellSize);
+      const size = cellSize + 12;
+      const left = Math.max(0, Math.min(this.width - size, x - 6));
+      const top = Math.max(0, Math.min(this.height - size, y - 15));
+      ctx.drawImage(opts.image, left, top, size, size);
       return;
     }
     const pad = cellSize * 0.1;
@@ -126,21 +88,24 @@ export class Renderer {
 
     // 攻击范围指示（悬停/选中时）
     if (opts.showRange && opts.range) {
-      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.fillStyle = 'rgba(221,241,176,0.14)';
       ctx.beginPath();
       ctx.arc(c.x, c.y, opts.range, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#f5e8b2';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 4]);
       ctx.stroke();
+      ctx.setLineDash([]);
     }
 
-    // 图片塔：整体按 angle 旋转绘制（随发射方向旋转）
+    // 侧视像素单位只左右转身，保持角色直立。
     if (opts.image) {
-      const size = cellSize * 0.9;
+      const size = cellSize;
       ctx.save();
-      ctx.translate(c.x, c.y);
-      if (opts.angle) ctx.rotate(opts.angle);
+      ctx.translate(c.x, c.y - 5);
+      if (Math.cos(opts.angle ?? 0) < 0) ctx.scale(-1, 1);
+      if (opts.ghost) ctx.globalAlpha = .65;
       ctx.drawImage(opts.image, -size / 2, -size / 2, size, size);
       ctx.restore();
       return;
@@ -180,8 +145,9 @@ export class Renderer {
   /** 绘制怪兽：有图片则 drawImage，否则回退到 drawCircle；被减速时加一圈寒冰外环 */
   drawMonster(x, y, radius, opts = {}) {
     if (opts.image) {
-      const d = radius * 2;
-      this.ctx.drawImage(opts.image, x - radius, y - radius, d, d);
+      const d = Math.round(radius * 2.4);
+      const bob = Math.floor((opts.distance || 0) / 7) % 2 * 2;
+      this.ctx.drawImage(opts.image, Math.round(x - d / 2), Math.round(y - d / 2) - bob, d, d);
     } else {
       this.drawCircle(x, y, radius, opts.color);
     }
@@ -207,7 +173,7 @@ export class Renderer {
   }
 
   /** 通用血条，x,y 为血条中心，w 为总宽 */
-  drawHealthBar(x, y, w, pct, color = '#4caf50') {
+  drawHealthBar(x, y, w, pct, color = '#99d482') {
     const { ctx } = this;
     const h = 5;
     const left = x - w / 2;

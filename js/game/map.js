@@ -8,6 +8,7 @@ export const CellType = {
   PATH: 1,      // 怪兽行进路径，不可放置
   BASE: 2,      // 基地，不可放置
   OCCUPIED: 3,  // 已放置士兵
+  TERRAIN: 4,   // 林木、河岸等不可建造的地形
 };
 
 /**
@@ -31,7 +32,7 @@ export class GameMap {
     this.cellSize = CONFIG.CELL_SIZE;
 
     if (mapConfig && Array.isArray(mapConfig.waypoints) && mapConfig.waypoints.length >= 2) {
-      this.mapName = mapConfig.name || '自定义地图';
+      this.mapName = mapConfig.title || mapConfig.name || '自定义地图';
       this.waypoints = mapConfig.waypoints.map((wp) => ({ col: wp.col, row: wp.row }));
       this.baseCell = mapConfig.baseCell
         ? { col: mapConfig.baseCell.col, row: mapConfig.baseCell.row }
@@ -52,6 +53,7 @@ export class GameMap {
       this.baseCell = { col: 19, row: 9 };
     }
 
+    this.sites = mapConfig?.sites;
     this._grid = [];
     this._buildGrid();
     this._pathPixels = this._buildPathPixels();
@@ -61,30 +63,46 @@ export class GameMap {
   _buildGrid() {
     for (let r = 0; r < this.rows; r++) {
       const rowArr = [];
-      for (let c = 0; c < this.cols; c++) rowArr.push(CellType.EMPTY);
+      for (let c = 0; c < this.cols; c++) rowArr.push(this.sites ? CellType.TERRAIN : CellType.EMPTY);
       this._grid.push(rowArr);
     }
-    // 把路径经过的单元格标记为 PATH
+    const start = this.waypoints[0], end = this.waypoints[this.waypoints.length - 1];
+    for (const [i, {col, row}] of this.waypoints.entries()) {
+      const insideX = col >= 0 && col < this.cols, insideY = row >= 0 && row < this.rows;
+      const entry = i === 0 && (((col === -1 || col === this.cols) && insideY) ||
+        ((row === -1 || row === this.rows) && insideX));
+      if (!Number.isInteger(col) || !Number.isInteger(row) || (!(insideX && insideY) && !entry)) {
+        throw new Error(this.mapName + '：道路坐标无效 ' + [col, row]);
+      }
+    }
+    if (this.baseCell.col !== end.col || this.baseCell.row !== end.row) {
+      throw new Error(this.mapName + '：城堡必须位于道路终点');
+    }
+    this._markPath(start.col, start.row);
     for (let i = 0; i < this.waypoints.length - 1; i++) {
       const a = this.waypoints[i];
       const b = this.waypoints[i + 1];
       const dc = Math.sign(b.col - a.col);
       const dr = Math.sign(b.row - a.row);
-      let c = a.col;
-      let r = a.row;
-      while (c !== b.col || r !== b.row) {
-        this._markPath(c, r);
-        c += dc;
-        r += dr;
+      if (Math.abs(dc) + Math.abs(dr) !== 1) {
+        throw new Error(this.mapName + '：道路必须由非零的横段或竖段组成');
       }
-      this._markPath(b.col, b.row);
+      const steps = Math.abs(b.col - a.col) + Math.abs(b.row - a.row);
+      // 起点已由上一段标记，共用拐角只访问一次。
+      for (let n = 1; n <= steps; n++) this._markPath(a.col + n * dc, a.row + n * dr);
     }
-    // 基地标记
     this._grid[this.baseCell.row][this.baseCell.col] = CellType.BASE;
+    for (const [col, row] of this.sites || []) {
+      if (!Number.isInteger(col) || !Number.isInteger(row) || this.getCell(col, row) !== CellType.TERRAIN) {
+        throw new Error(this.mapName + '：塔位必须在独立的空地上 ' + [col, row]);
+      }
+      this._grid[row][col] = CellType.EMPTY;
+    }
   }
 
   _markPath(col, row) {
     if (col >= 0 && col < this.cols && row >= 0 && row < this.rows) {
+      if (this._grid[row][col] === CellType.PATH) throw new Error(this.mapName + '：道路重复经过 ' + [col, row]);
       this._grid[row][col] = CellType.PATH;
     }
   }
@@ -156,7 +174,7 @@ export class GameMap {
       const a = pts[i];
       const b = pts[i + 1];
       const segLen = Math.hypot(b.x - a.x, b.y - a.y);
-      if (remaining <= segLen) {
+      if (remaining < segLen) {
         return this._segPos(a, b, remaining / segLen, false);
       }
       remaining -= segLen;
